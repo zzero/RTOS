@@ -8,6 +8,7 @@
 #include "kernel.c"
 #include "global.h"
 #include <stdlib.h>
+#include <math.h>
 
 /*Function Headers*/
 #endif
