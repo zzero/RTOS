@@ -1,5 +1,5 @@
 /* CRT */
-
+#include <stdlib.h>
 #include <stdio.h>			//standard in/out
 #include <signal.h>			//signals defined
 #include <sys/mman.h>		//memory map
