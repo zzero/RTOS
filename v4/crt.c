@@ -3,7 +3,7 @@
 #include <stdio.h>			//standard in/out
 #include <signal.h>			//signals defined
 #include <sys/mman.h>		//memory map
-
+//low
 #include "global.h"			//our global parameters
 
 void die()	//kills itself
