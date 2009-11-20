@@ -1,16 +1,18 @@
 /* KB */
+#include <stdlib.h>
+#include <stdio.h>
+#include <signal.h>
+#include <sys/mman.h>			//memory map
+#include "global.h"			//our global parameters
+#include "RTX.h"				//primitives
 
-#include <stdio.h>			//standard in/out
-#include <signal.h>			//signals defined
-#include <sys/mman.h>		//memory map
 //#include <sys/wait.h>		//wait() function. don't think we need this
 //#include <fcntl.h>		//open() function. don't think we need this
 //#include <sys/types.h>	//might need it for caddr_t struct
-#include "global.h"			//our global parameters
 
 void die()	//kills itself
 {
-	exit(0);	//where is this function from?
+	terminate();
 }
 
 int main(int rtx_pid, int kb_sm_fid)	//get rtx_pid, fid from RTX during fork
