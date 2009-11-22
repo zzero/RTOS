@@ -1,18 +1,24 @@
 /* CRT */
-
-#include <stdio.h>			//standard in/out
-#include <signal.h>			//signals defined
-#include <sys/mman.h>		//memory map
-
-#include "global.h"			//our global parameters
+#include <stdlib.h>
+#include <stdio.h>
+#include <signal.h>
+#include <sys/mman.h>			//memory map
+#include "include/global.h"			//our global parameters
+#include "include/RTX.h"				//primitives
 
 void die()	//kills itself
 {
-	exit(0);
+	terminate();
 }
 
 int main(int rtx_pid, int crt_sm_fid)	//get rtx_pid, fid from RTX during fork
 {
+	//variables
+	caddr_t mmap_ptr;	//ptr to memory mapped	//where is this struc from?
+	crt_sm * crt_sm_ptr;	//ptr to shared memory
+	int index = 0;		//index of char data in shared memory
+	char c;				//char inputted
+	
 	sigset(SIGINT, die);//when parent send SIGINT, abort
 
 	int index = 0;	//counter for num of char in crt_sm
@@ -29,7 +35,7 @@ int main(int rtx_pid, int crt_sm_fid)	//get rtx_pid, fid from RTX during fork
 		(off_t) 0					//offset in page frame	//off_t from types.h
 	);	
 
-	if (mmap_ptr == MAP_FAILED)		//if memory map fail, abort KB
+	if (mmap_ptr == MAP_FAILED)		//if memory map fail, abort CRT
 	{
 		printf("Child memory map has failed, CRT is aborting!\n");
 		die();
@@ -41,7 +47,7 @@ int main(int rtx_pid, int crt_sm_fid)	//get rtx_pid, fid from RTX during fork
 
 	while(1)	//until killed by parent
 	{
-		while(kb_sm_ptr->status == 1)
+		while(crt_sm_ptr->status == 1)
 			usleep(SLEEP);
 
 		while(crt_sm_ptr->data[index] != '\0')
@@ -55,7 +61,7 @@ int main(int rtx_pid, int crt_sm_fid)	//get rtx_pid, fid from RTX during fork
 
 		crt_sm_ptr->status = 1;		//ready for rtx to put more char
 		kill(rtx_pid, SIGUSR2);			//send a signal to parent			
-		crt_sm_ptr->index = 0;		//reset index
+		index = 0;		//reset index
 
 		//now go back to waiting for status bit to change
 	}
