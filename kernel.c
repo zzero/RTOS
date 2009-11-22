@@ -4,26 +4,7 @@
 
 PCB *PCB_finder(int pid){
 	PCB *temp;
-	
-	//~ for (temp = readyQ->p0_head; temp!=NULL; temp = temp->next){
-		//~ if (temp->pid==pid)
-			//~ return temp;
-	//~ }
-	
-	//~ for (temp = readyQ->p1_head; temp!=NULL; temp = temp->next){
-		//~ if (temp->pid==pid)
-			//~ return temp;
-	//~ }
-	
-	//~ for (temp = readyQ->p2_head; temp!=NULL; temp = temp->next){
-		//~ if (temp->pid==pid)
-			//~ return temp;
-	//~ }
-	
-	//~ for (temp = readyQ->p3_head; temp!=NULL; temp = temp->next){
-		//~ if (temp->pid==pid)
-			//~ return temp;
-	//~ }
+
 	for (temp = ptr_readyQ->p0->head; temp!=NULL; temp=temp->next){
 		if (temp->pid==pid)
 			return temp;
