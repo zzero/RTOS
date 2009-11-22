@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "kernel.h"
-#include "kernel.c"
+#include "../kernel.c"
 #include "global.h"
 #include <stdlib.h>
 #include <math.h>
