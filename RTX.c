@@ -8,11 +8,11 @@ int main(){
 	return 0;
 }
 
-void atomic(bool status)
+void atomic(int status)
 {
 	static sigset_t oldmask;
 	sigset_t newmask;
-	if (on) 
+	if (status==1) 
 	{
 		current_process->atomic_count = current_process->atomic_count + 1;
 		if (current_process->atomic_count == 1) 
