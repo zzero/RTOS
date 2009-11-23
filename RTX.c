@@ -1,8 +1,7 @@
+ #include "include/RTX.h"
 
-#include "include/RTX.h"
-
-int main(){
-
+int main()
+{
 	Initialization();
 	
 	return 0;
@@ -39,7 +38,7 @@ void atomic(int status)
 
     
 int terminate(){
-    atomic(1)
+    atomic(1);
     
     for (int i=1; i<=NUMB_PROC; i++)
         free(PCB_finder(i));
@@ -50,10 +49,9 @@ int terminate(){
   
     //kill shared memory        
      
-    atomic(0)
+    atomic(0);
     printf("SIGNAL RECEIVED..TERMINATING RTX");
-    
-    }
+}
     
 void ProcessA()
 {}

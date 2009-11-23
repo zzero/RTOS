@@ -16,7 +16,7 @@ void ProcessA();
 void ProcessB();
 void ProcessC();
 void CCI();
-int terminate()
+int terminate();
 
 #endif
 
