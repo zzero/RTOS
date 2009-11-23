@@ -111,14 +111,14 @@ typedef struct sendTrcBfr
 {
 	trace *sendTrcBfr_head;
 	trace *sendTrcBfr_tail;
-	int trace_number;
+	int trace_numb;
 }sendTrcBfr;
 
 typedef struct recvTrcBfr
 {
 	trace *recvTrcBfr_head;
 	trace *recvTrcBfr_tail;
-	int trace_number;
+	int trace_numb;
 }recvTrcBfr;
 
 /*Variables*/
