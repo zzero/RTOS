@@ -2,15 +2,18 @@
 #define RTX_H
 
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
+#include <signal.h>
+#include <string.h>
+#include <math.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
 #include "kernel.h"
 #include "../kernel.c"
-#include "global.h"
-#include <stdlib.h>
-#include <math.h>
 
-//pids
+/* Process ID */
 #define NUMB_PROC 8
 #define PROCESSA 1
 #define PROCESSB 2
@@ -21,14 +24,11 @@
 #define TIMER_I_PROC 7
 #define KB_I_PROC 8
 
-/*Function Headers*/
-
+/* Function Headers */
+int terminate();
 void ProcessA();
 void ProcessB();
 void ProcessC();
 void CCI();
-int terminate();
 
 #endif
-
-

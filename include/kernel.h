@@ -4,7 +4,6 @@
 #include <setjmp.h>
 #include <signal.h>
 
-
 #ifndef KERNEL_H
 #define KERNEL_H
 
@@ -39,8 +38,30 @@
 
 //define default PID
 #define defaultPID -1
-/*Structures*/
 
+//KB and CRT related
+#define SMSIZE 100
+#define KB_MAXCHAR 80
+#define CRT_MAXCHAR 85
+#define SLEEP 500
+
+/* Structures */
+
+//kb shared memory
+typedef struct
+{
+	int status;				//status bit
+	char data[KB_MAXCHAR];	//data array
+}kb_sm;
+
+//crt shared memory
+typedef struct
+{
+	int status;				//status bit
+	char data[CRT_MAXCHAR];	//data array
+}crt_sm;
+
+//message env
 typedef struct MsgEnv
 {
 	int env_id;
@@ -70,7 +91,6 @@ typedef struct PCB
 	//~ char ip_state[10]; //stores whether iprocess is executing or idle
 	int ip_status; //Status of IProc
 	struct PCB *next;
-
 }PCB;
 
 //general pcb Q
@@ -85,7 +105,6 @@ typedef struct MsgEnvHT
 {
 	struct MsgEnv *head;
 	struct MsgEnv *tail;
-
 }MsgEnvHT;
 
 //ready Q
@@ -130,7 +149,8 @@ typedef struct recvTrcBfr
 	int trace_numb;
 }recvTrcBfr;
 
-/*Variables*/
+/* Variables */
+
 /*Beomjoon*/
 PCB *current_process;
 
@@ -148,7 +168,8 @@ PCB *crt_i_proc;
 PCB *kb_i_proc;
 MsgEnvHT *TimeoutQ;
 
-/*functions*/
+/* Functions */
+
 /*Beomjoon*/
 MsgEnv* K_request_process_status(MsgEnv *msg_env);//FIXME: I NEED TO SEND MSG NOT RETURN!
 int K_change_priority(int new_priority, int target_process_id);
@@ -196,6 +217,14 @@ void CRT_I_Proc();
 void Timer_I_Proc();
 void KB_I_Proc();
 
+/* Hyesun - forking related */
+int status;
+int kb_pid, kb_sm_fid;
+int crt_pid, crt_sm_fid;
+char * kb_filename = "kb_sm_file";
+char * crt_filename = "crt_sm_file";
+caddr_t kb_mmap_ptr, crt_mmap_ptr;
+kb_sm * kb_sm_ptr;
+crt_sm * crt_sm_ptr;
 
 #endif
-
