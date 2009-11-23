@@ -1,4 +1,5 @@
 #define CLOCK 8
+#include "include/RTX.h"
 
 void sig_handler(int sig_name)
 {
@@ -70,7 +71,7 @@ void KB_I_Proc()
                        kb_txt[i] = kb_sm_ptr->data[i];
                        
      msgsend.msg_txt = kb_txt;
-     K_send_message(CCI_pid, msgsend);
+     K_send_message(CCI_pid, msgsend); //difine CCI_pid as global
      
      kb_sm_ptr->status = 0;
 }
@@ -214,7 +215,46 @@ void clock_proc()
      MsgEnv* msgsend;
      msgsend.msg_type = TIMER_REQUEST;
      
+     MsgEnv* msgdisp;
+     msgsend.msg_type = DISPLAY_REQUEST;
+     
+     K_request_delay(100, WAKE_UP, msgsend);
+     
+     while(msgsend->txt_area != WAKE_UP){
+         msgsend = K_recieve();
+     }
+     
+     msgsend = recieve_message();  // maybe not needed due to previous line
+     
+     while(msgsend != NULL)
+     {
+         //dequeue msg
+         
+         if(msgsend.msg_type == CLOCK_ON)  //define CLOCK_ON as global double check automated increment
+         {
+            /*
+            - increment clock string by 1
+			- request_delay()- delay for 1 second
+				- pass wakeup1 envelope
+			- wait for envelope return with wakeup code
+            */
+
+         }   
+         
+         else if(msgsend.msg_type == SET_CLOCK) ///add to header files
+         {
+              clock[] = "00:00:00";
+              //deallocate msg
+              
+         }   
+         
+         msgsend = recieve_message();        
+     }
        
+     msgdisp.txt_area = clock[];
+     int check;
+     check = K_send_console_chars(msgdisp);
+     //verify check values
        
           
 }

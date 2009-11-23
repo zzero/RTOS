@@ -21,6 +21,12 @@ PCB *PCB_finder(int pid){
 	}
 }
 
+#FIXME: possibly place this in another file?
+void itoa(int numb, char *buffer){
+	sprintf(buffer, "%d", numb);
+}
+	
+
 MsgEnv* K_request_process_status(MsgEnv *msg_env)
 {
 	PCB *temp;
