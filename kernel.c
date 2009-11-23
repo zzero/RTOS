@@ -632,7 +632,6 @@ void Initialization()
 	sigset (SIGUSR2, kb_i_proc);
 	ualarm(10000, 10000);
 
-	
 	//Forking KB and CRT
 	
 

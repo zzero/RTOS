@@ -3,7 +3,7 @@
 
 CC = gcc
 CFLAGS = -g -Wall
-OBJECTS = RTX_project.o
+OBJECTS = RTX.o
 INCFLAGS = 
 LDFLAGS = -Wl,-rpath,/usr/local/lib
 LIBS = 
@@ -11,7 +11,7 @@ LIBS =
 all: RTX_project
 
 RTX_project: $(OBJECTS)
-	$(CC) -o RTX_project $(OBJECTS) $(LDFLAGS) $(LIBS)
+	$(CC) -o RTX $(OBJECTS) $(LDFLAGS) $(LIBS)
 
 .SUFFIXES:
 .SUFFIXES:	.c .cc .C .cpp .o
