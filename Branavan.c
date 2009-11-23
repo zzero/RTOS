@@ -1,4 +1,5 @@
 #define CLOCK 8
+#include "include/RTX.h"
 
 void sig_handler(int sig_name)
 {
