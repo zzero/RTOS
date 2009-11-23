@@ -2,6 +2,8 @@
 #include "include/RTX.h"
 
 int main(){
+
+	Initialization();
 	
 	return 0;
 }
@@ -36,3 +38,12 @@ void atomic(bool status)
 
 
 }
+
+void ProcessA()
+{}
+
+void ProcessB()
+{}
+
+void ProcessC()
+{}

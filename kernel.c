@@ -251,8 +251,8 @@ MsgEnv *deque_msg_from_PCB(PCB* dest){
 }
 
 void enque_msg_to_free_envQ(MsgEnv *msg_env){
-	msg_env->next = ptr_free_envQ->tail;
-	ptr_free_envQ->tail = msg_env;
+	msg_env->next = ptr_free_envQ;
+	ptr_free_envQ = msg_env;
 }
 
 MsgEnv* deque_msg_from_free_envQ(){
@@ -350,64 +350,75 @@ void context_switch(jmp_buf *previous, jmp_buf *next)
 
 void Initialization()
 {
-	iTableRow *iTable[7]=(iTableRow*)malloc(sizeof(iTableRow)*6);
+	
+	iTableRow *iTable=(struct iTableRow*)malloc(sizeof(iTableRow)*8);
 
 	//Write to the iTable
 	//Process A
-	iTable[0]->pid=1;
-	iTable[0]->priority=1;
-	iTable[0]->stacksize=STACKSIZE;
-	int (*fptr)();
-	fptr=ProcessA;
-	iTable[0]->start_PC=fptr;
+	iTable[0].pid=1;
+	iTable[0].priority=1;
+	iTable[0].stacksize=STACKSIZE;
+	void (*fp) (); 
+	fp = (void *) ProcessA();	
+	iTable[0].start_PC=fptr;
 
 	//Process B
-	iTable[1]->pid=2;
-	iTable[1]->priority=1;
-	iTable[1]->stacksize=STACKSIZE;
-	int (*fptr)();
-	fptr=ProcessB;
-	iTable[1]->start_PC=fptr;
+	iTable[1].pid=2;
+	iTable[1].priority=1;
+	iTable[1].stacksize=STACKSIZE;
+	//int (*fptr)();
+	fptr=ProcessB();
+	iTable[1].start_PC=fptr;
 
 	//Process C
-	iTable[2]->pid=3;
-	iTable[2]->priority=1;
-	iTable[2]->stacksize=STACKSIZE;
-	int (*fptr)();
-	fptr=ProcessB;
-	iTable[2]->start_PC=fptr;
+	iTable[2].pid=3;
+	iTable[2].priority=1;
+	iTable[2].stacksize=STACKSIZE;
+	//int (*fptr)();
+	fptr=ProcessC();
+	iTable[2].start_PC=fptr;
 
 	//Null process
-	iTable[3]->pid=4;
-	iTable[3]->priority=3;
-	iTable[3]->stacksize=STACKSIZE;
-	int (*fptr)();
-	fptr=null_process;
-	iTable[3]->start_PC=fptr;
+	iTable[3].pid=4;
+	iTable[3].priority=3;
+	iTable[3].stacksize=STACKSIZE;
+	//int (*fptr)();
+	fptr=null_process();
+	iTable[3].start_PC=fptr;
 
-	//kb_i_proc
-	iTable[4]->pid=5;
-	iTable[4]->priority=0;
-	iTable[4]->stacksize=STACKSIZE;
-	int (*fptr)();
-	fptr=kb_i_proc;
-	iTable[4]->start_PC=fptr;
+	//CCI
+	iTable[4].pid=5;
+	iTable[4].priority=0;
+	iTable[4].stacksize=STACKSIZE;
+	//int (*fptr)();
+	fptr=CCI();
+	iTable[4].start_PC=fptr;
 
 	//crt_i_proc
-	iTable[5]->pid=6;
-	iTable[5]->priority=0;
-	iTable[5]->stacksize=STACKSIZE;
-	int (*fptr)();
-	fptr=crt_i_proc;
-	iTable[5]->start_PC=fptr;
+	iTable[5].pid=6;
+	iTable[5].priority=0;
+	iTable[5].stacksize=STACKSIZE;
+	//int (*fptr)();
+	fptr=CRT_I_Proc();
+	iTable[5].start_PC=fptr;
 
 	//timer_i_proc
-	iTable[6]->pid=7;
-	iTable[6]->priority=0;
-	iTable[6]->stacksize=STACKSIZE;
-	int (*fptr)();
-	fptr=timer_i_proc;
-	iTable[6]->start_PC=fptr;
+	iTable[6].pid=7;
+	iTable[6].priority=0;
+	iTable[6].stacksize=STACKSIZE;
+	//int (*fptr)();
+	fptr=Timer_I_Proc();
+	iTable[6].start_PC=fptr;
+
+	//kb_i_proc
+	iTable[7].pid=8;
+	iTable[7].priority=0;
+	iTable[7].stacksize=STACKSIZE;
+	//int (*fptr)();
+	fptr=KB_I_Proc();
+	iTable[7].start_PC=fptr;
+
+
 
 	int i; //BK: What's this?
 	current_process = NULL; //BK
@@ -425,16 +436,13 @@ void Initialization()
 	trace *tracex;
 	PCB *apcb;
 	
-	ptr_free_envQ->head = NULL; //BK: Needs to be intialized
-	ptr_free_envQ->tail = NULL;
+	
 	for(i=0; i<10; i++) //create 10 messsage envelopes and add to message envelope Q
 	{		
 		msge = (MsgEnv*)malloc(sizeof(MsgEnv));
-		msge->type = FREE;
-		//~ msge->next = ptr_free_envQ; //FIXME: should we create a actual Q for this?
-		msge->next = ptr_free_envQ->head;
-		//~ ptr_free_envQ = msge;
-		ptr_free_envQ->head = msge;
+		msge->type = FREE;		
+		msge->next = ptr_free_envQ;		
+		ptr_free_envQ = msge;
 	}
 
 	for(i=0; i<16; i++) //create 16 trace structs and add to send trace buffer
@@ -473,14 +481,14 @@ void Initialization()
 
 	jmp_buf kernel_buf;
 	
-	//we assume the user processes are listed first in the IT
+	//we set it so that user processes are listed first in the IT
 	for (i=0; i<USR_PROC_NUMB; i++) //for each user process, do the following
 	{
 		apcb = (PCB*)malloc(sizeof(PCB));
-		apcb->pid = iTable[i]->pid; //FIXME: iTable is not defined in kernel.h
-		apcb->priority = iTable[i]->priority[i];
-		apcb->stacksize = iTable[i]->stacksize[i];
-		apcb->start_PC = iTable[i]->start_PC[i];
+		apcb->pid = iTable[i].pid; //FIXME: iTable is not defined in kernel.h
+		apcb->priority = iTable[i].priority;
+		apcb->stacksize = iTable[i].stacksize;
+		apcb->start_PC = iTable[i].start_PC;
 		apcb->stack_pointer = (*char)malloc(apcb->stacksize)+apcb->stacksize; 
 		//~ apcb->status = "ready"; //BK
 		apcb->status = READY;
@@ -517,12 +525,12 @@ void Initialization()
 	for(i = USR_PROC_NUMB; i<iPROC_NUMB; i++)
 	{
 		apcb = (PCB*)malloc(sizeof(PCB));
-		apcb->pid = iTable[i]->pid;
-		apcb->priority = iTable[i]->priority[i];
-		apcb->stacksize = iTable[i]->stacksize[i];
+		apcb->pid = iTable[i].pid;
+		apcb->priority = iTable[i].priority;
+		apcb->stacksize = iTable[i].stacksize;
 		apcb->stack_pointer = (*char)malloc(apcb->stacksize)+apcb->stacksize;	
 		
-		apcb->ip_free_msgQ =NULL //msg envelopes will be added on next line
+		apcb->ip_free_msgQ =NULL; //msg envelopes will be added on next line
 		msge = (MsgEnv*)malloc(sizeof(MsgEnv));
 		msge->type=0;
 		msge->next=apcb->ip_free_msgQ;
