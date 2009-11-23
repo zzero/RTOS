@@ -21,13 +21,13 @@ PCB *PCB_finder(int pid){
 	}
 }
 
-#FIXME: possibly place this in another file?
+//#FIXME: possibly place this in another file?
 void itoa(int numb, char *buffer){
 	sprintf(buffer, "%d", numb);
 }
 	
 
-MsgEnv* K_request_process_status(MsgEnv *msg_env)
+/*MsgEnv* K_request_process_status(MsgEnv *msg_env)
 {
 	PCB *temp;
 	char *buffer;
@@ -58,7 +58,7 @@ MsgEnv* K_request_process_status(MsgEnv *msg_env)
 
 	return msg_env;
 	
-}
+}*/ //fix the iota function to take the right number of parameters
 	
 int K_change_priority(int new_priority, int target_process_id)
 {
@@ -168,7 +168,7 @@ int K_get_console_chars(MsgEnv *msg_env)
 	return return_value;
 }
 				
-int K_get_trace_buffers(MsgEnv *msg_env)
+/*int K_get_trace_buffers(MsgEnv *msg_env)
 {
 	char *sendtrc_buf = "sent: \n";
 	char *rcvtrc_buf = "received: \n";
@@ -207,7 +207,7 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 	int return_value = K_send_message(msg_env->dest_id, msg_env);
 	
 	return return_value;
-}
+}*/ //fix iota func
 
 int K_release_processor()
 {
@@ -221,7 +221,7 @@ int K_release_processor()
 	return SUCCESS;
 }
 	
-int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
+/*int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
 {
 	msg_env->type = TIMER_REQUEST;
 	msg_env->num_clock_ticks = time_delay;
@@ -233,7 +233,7 @@ int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
 	int return_value = K_send_message(current_process->pid, msg_env);
 	
 	return return_value;
-}
+}*/ //fix iota
 
 /*Queues*/
 void enque_msg_to_PCB(MsgEnv *msg_env, PCB* dest){
@@ -331,25 +331,84 @@ PCB *deque_PCB_from_blocked_on_receiveQ()
 
 void process_switch()
 {
-	//~ PCB *next_pcb, *old_pcb;
-	//~ next_pcb = rpq_dequeue( ); //get ptr to highest priority ready process
-	//~ next_pcb->status = EXECUTING;
-	//~ old_pcb = current_process;
-	//~ current_process = next_pcb;
-	//~ context_switch( old_pcb->context, next_pcb->context);
+	PCB *next_pcb, *old_pcb;
+	next_pcb = deque_PCB_from_readyQ(); //get ptr to highest priority ready process
+	next_pcb->status = EXECUTING;
+	old_pcb = current_process;
+	current_process = next_pcb;
+	context_switch(old_pcb->context, next_pcb->context);
 }
 
 void context_switch(jmp_buf *previous, jmp_buf *next)
 {
-	//~ return_code = setjmp(previous); //save the context of the previous process
-	//~ if (return_code == 0) 
-	//~ {
-		//~ longjmp(next,1); // start the next process from where it left of
-	//~ }	
+	int return_code = setjmp(previous); //save the context of the previous process
+	if (return_code == 0) 
+	{
+		longjmp(next,1); // start the next process from where it left of
+	}	
 }
 
 void Initialization()
 {
+	iTableRow *iTable[7]=(iTableRow*)malloc(sizeof(iTableRow)*6);
+
+	//Write to the iTable
+	//Process A
+	iTable[0]->pid=1;
+	iTable[0]->priority=1;
+	iTable[0]->stacksize=STACKSIZE;
+	int (*fptr)();
+	fptr=ProcessA;
+	iTable[0]->start_PC=fptr;
+
+	//Process B
+	iTable[1]->pid=2;
+	iTable[1]->priority=1;
+	iTable[1]->stacksize=STACKSIZE;
+	int (*fptr)();
+	fptr=ProcessB;
+	iTable[1]->start_PC=fptr;
+
+	//Process C
+	iTable[2]->pid=3;
+	iTable[2]->priority=1;
+	iTable[2]->stacksize=STACKSIZE;
+	int (*fptr)();
+	fptr=ProcessB;
+	iTable[2]->start_PC=fptr;
+
+	//Null process
+	iTable[3]->pid=4;
+	iTable[3]->priority=3;
+	iTable[3]->stacksize=STACKSIZE;
+	int (*fptr)();
+	fptr=null_process;
+	iTable[3]->start_PC=fptr;
+
+	//kb_i_proc
+	iTable[4]->pid=5;
+	iTable[4]->priority=0;
+	iTable[4]->stacksize=STACKSIZE;
+	int (*fptr)();
+	fptr=kb_i_proc;
+	iTable[4]->start_PC=fptr;
+
+	//crt_i_proc
+	iTable[5]->pid=6;
+	iTable[5]->priority=0;
+	iTable[5]->stacksize=STACKSIZE;
+	int (*fptr)();
+	fptr=crt_i_proc;
+	iTable[5]->start_PC=fptr;
+
+	//timer_i_proc
+	iTable[6]->pid=7;
+	iTable[6]->priority=0;
+	iTable[6]->stacksize=STACKSIZE;
+	int (*fptr)();
+	fptr=timer_i_proc;
+	iTable[6]->start_PC=fptr;
+
 	int i; //BK: What's this?
 	current_process = NULL; //BK
 	ptr_readyQ = (readyQ*)malloc(sizeof(readyQ));
@@ -413,7 +472,7 @@ void Initialization()
 	//initialize timing services 
 
 	jmp_buf kernel_buf;
-	/*
+	
 	//we assume the user processes are listed first in the IT
 	for (i=0; i<USR_PROC_NUMB; i++) //for each user process, do the following
 	{
@@ -617,7 +676,7 @@ void Initialization()
 
 	//~ kb_sm_ptr = (kb_sm *) mmap_ptr;	//sm pointer to the memory mapped
 
-	
+	deque_PCB_from_readyQ();
 }
 
 

@@ -68,7 +68,7 @@ typedef struct PCB
 	MsgEnv *ip_free_msgQ; //used only by iprocesses to have their own set of free env
 	//~ char ip_state[10]; //stores whether iprocess is executing or idle
 	int ip_status; //Status of IProc
-	PCB *next;
+	struct PCB *next;
 
 }PCB;
 
@@ -82,14 +82,7 @@ typedef struct pcbHT
 //ready Q
 typedef struct readyQ
 {
-	//~ PCB *p0_head;
-	//~ PCB *p0_tail;
-	//~ PCB *p1_head;
-	//~ PCB *p1_tail;
-	//~ PCB *p2_head;
-	//~ PCB *p2_tail;
-	//~ PCB *p3_head;
-	//~ PCB *p3_tail;
+	
 	pcbHT *p0;
 	pcbHT *p1;
 	pcbHT *p2;
@@ -97,10 +90,14 @@ typedef struct readyQ
 	
 	}readyQ;
 
-typedef struct free_envQ{
-	MsgEnv *head;
-	MsgEnv *tail;
-}free_envQ;
+typedef struct iTableRow
+{
+	int pid;
+	int priority;
+	int stacksize;
+	int *start_PC;
+
+}iTableRow;
 
 typedef struct trace
 {
@@ -180,8 +177,8 @@ PCB *deque_PCB_from_blocked_on_receiveQ();
 /*Tope*/
 
 void Initialization();
-void enque_pcb(PCB *pcb_ptr);
-void rpq_dequeue();
+void enque_PCB_to_readyQ(PCB *to_enque);
+PCB *deque_PCB_from_readyQ();
 void process_switch();
 void context_switch(jmp_buf *previous, jmp_buf *next);
 void null_process();
