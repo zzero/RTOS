@@ -6,7 +6,7 @@ int main(){
 	return 0;
 }
 
-void atomic(bool status);
+void atomic(bool status)
 {
 	static sigset_t oldmask;
 	sigset_t newmask;
