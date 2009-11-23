@@ -66,7 +66,6 @@ typedef struct PCB
 	MsgEnv *receive_env_head;
 	MsgEnv *receive_env_tail;
 	MsgEnv *ip_free_msgQ; //used only by iprocesses to have their own set of free env
-	//~ char ip_state[10]; //stores whether iprocess is executing or idle
 	int ip_status; //Status of IProc
 	struct PCB *next;
 
@@ -82,13 +81,11 @@ typedef struct pcbHT
 //ready Q
 typedef struct readyQ
 {
-	
 	pcbHT *p0;
 	pcbHT *p1;
 	pcbHT *p2;
 	pcbHT *p3;
-	
-	}readyQ;
+}readyQ;
 
 typedef struct iTableRow
 {
@@ -96,7 +93,6 @@ typedef struct iTableRow
 	int priority;
 	int stacksize;
 	int *start_PC;
-
 }iTableRow;
 
 typedef struct trace
@@ -107,7 +103,7 @@ typedef struct trace
 	int time_stamp; //FIXME: what type?
 	struct trace *prev;
 	struct trace *next;
-	}trace;
+}trace;
 
 typedef struct sendTrcBfr
 {
@@ -149,8 +145,8 @@ MsgEnv *K_request_msg_env();
 int K_send_message(int dest_pid, MsgEnv *msg_env);
 MsgEnv *K_receive_message();
 
-void trace_send(int sender_id, int dest_id, int type); //To be implemented
-void trace_receive(int sender_id, int dest_id, int type); //To be implemented
+void trace_send(int sender_id, int dest_id, int type); 
+void trace_receive(int sender_id, int dest_id, int type); 
 
 int K_send_console_chars(MsgEnv *msg_env);
 int K_get_console_chars(MsgEnv *msg_env);
@@ -174,8 +170,8 @@ PCB *deque_PCB_from_blocked_on_requestQ();
 
 void enque_PCB_to_blocked_on_receiveQ(PCB *to_enque);
 PCB *deque_PCB_from_blocked_on_receiveQ();
-/*Tope*/
 
+/*Tope*/
 void Initialization();
 void enque_PCB_to_readyQ(PCB *to_enque);
 PCB *deque_PCB_from_readyQ();
