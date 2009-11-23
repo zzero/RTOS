@@ -11,6 +11,11 @@
 #include <math.h>
 
 /*Function Headers*/
+void ProcessA();
+void ProcessB();
+void ProcessC();
+void CCI();
+
 #endif
 
 

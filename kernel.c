@@ -1,6 +1,8 @@
 #include "include/kernel.h"
+#include "include/RTX.h"
 
 #define STACKSIZE 16384 //whats this
+#define SK_OFFSET 16
 
 PCB *PCB_finder(int pid){
 	PCB *temp;
@@ -422,6 +424,14 @@ void context_switch(jmp_buf *previous, jmp_buf *next)
 	}	
 }
 
+void null_process()
+{
+	while(1)
+	{
+		K_release_processor();
+	}
+}
+
 void Initialization()
 {
 	
@@ -432,8 +442,8 @@ void Initialization()
 	iTable[0].pid=1;
 	iTable[0].priority=1;
 	iTable[0].stacksize=STACKSIZE;
-	void (*fp) (); 
-	fp = (void *) ProcessA();	
+	void (*fptr) (); 
+	fptr = ProcessA();	
 	iTable[0].start_PC=fptr;
 
 	//Process B
@@ -457,7 +467,7 @@ void Initialization()
 	iTable[3].priority=3;
 	iTable[3].stacksize=STACKSIZE;
 	//int (*fptr)();
-	fptr=null_process();
+	fptr=null_process;
 	iTable[3].start_PC=fptr;
 
 	//CCI
@@ -473,7 +483,7 @@ void Initialization()
 	iTable[5].priority=0;
 	iTable[5].stacksize=STACKSIZE;
 	//int (*fptr)();
-	fptr=CRT_I_Proc();
+	fptr=CRT_I_Proc;
 	iTable[5].start_PC=fptr;
 
 	//timer_i_proc
@@ -481,7 +491,7 @@ void Initialization()
 	iTable[6].priority=0;
 	iTable[6].stacksize=STACKSIZE;
 	//int (*fptr)();
-	fptr=Timer_I_Proc();
+	fptr=Timer_I_Proc;
 	iTable[6].start_PC=fptr;
 
 	//kb_i_proc
@@ -489,7 +499,7 @@ void Initialization()
 	iTable[7].priority=0;
 	iTable[7].stacksize=STACKSIZE;
 	//int (*fptr)();
-	fptr=KB_I_Proc();
+	fptr=KB_I_Proc;
 	iTable[7].start_PC=fptr;
 
 
@@ -563,7 +573,7 @@ void Initialization()
 		apcb->priority = iTable[i].priority;
 		apcb->stacksize = iTable[i].stacksize;
 		apcb->start_PC = iTable[i].start_PC;
-		apcb->stack_pointer = (*char)malloc(apcb->stacksize)+apcb->stacksize; 
+		apcb->stack_pointer = (char*)malloc(STACKSIZE)+(STACKSIZE)-SK_OFFSET; 
 		//~ apcb->status = "ready"; //BK
 		apcb->status = READY;
 		apcb->ip_status = 1;
@@ -587,7 +597,7 @@ void Initialization()
 			else
 			{
 				void (*tmp_fn)();
-				tmp_fn=(void*) current_process_start_PC;
+				tmp_fn=(void*) current_process->start_PC;
 				tmp_fn();
 			}
 		}
@@ -602,17 +612,20 @@ void Initialization()
 		apcb->pid = iTable[i].pid;
 		apcb->priority = iTable[i].priority;
 		apcb->stacksize = iTable[i].stacksize;
-		apcb->stack_pointer = (*char)malloc(apcb->stacksize)+apcb->stacksize;	
+		apcb->stack_pointer = (char*)malloc(STACKSIZE)+(STACKSIZE);	
 		
 		apcb->ip_free_msgQ =NULL; //msg envelopes will be added on next line
-		msge = (MsgEnv*)malloc(sizeof(MsgEnv));
-		msge->type=0;
-		msge->next=apcb->ip_free_msgQ;
-		apcb->ip_free_msgQ=msge;
+		for(i=0;i<10;i++)
+		{
+			msge = (MsgEnv*)malloc(sizeof(MsgEnv));
+			msge->type=0;
+			msge->next=apcb->ip_free_msgQ;
+			apcb->ip_free_msgQ=msge;
+		}
 		
 		//~ set status of PCB to 'I_PROCESS'
 		apcb->status = iPROC;
-		apcb->ip_status= IDLE
+		apcb->ip_status= IDLE;
 		apcb->receive_env_head= NULL;
 		apcb->receive_env_tail = NULL;
 		
@@ -631,7 +644,7 @@ void Initialization()
 	sigset (SIGUSR1, crt_i_proc);
 	sigset (SIGUSR2, kb_i_proc);
 	ualarm(10000, 10000);
-	*/
+	
 	
 	//Forking KB and CRT
 	
