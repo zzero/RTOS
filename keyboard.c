@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
-#include <sys/mman.h>			//memory map
+#include <sys/mman.h>				//memory map
 #include "include/global.h"			//our global parameters
-#include "include/RTX.h"				//primitives
+#include "include/RTX.h"			//primitives
 
 //#include <sys/wait.h>		//wait() function. don't think we need this
 //#include <fcntl.h>		//open() function. don't think we need this
