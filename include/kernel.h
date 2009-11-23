@@ -33,8 +33,8 @@
 #define CONSOLE_INPUT 6
 
 //define number of processes
-#define USR_PROC_NUMB 3
-#define iPROC_NUMB 6
+#define USR_PROC_NUMB 4
+#define iPROC_NUMB 7
 
 //define default PID
 #define defaultPID -1
@@ -60,12 +60,13 @@ typedef struct PCB
 	int priority;
 	int stacksize;
 	char *start_PC; // address of the instruction being executed, or the address of the next instruction to be executed. Possibly be void pointer?
-	jmp_buf context;
+	jmp_buf *context;
 	char *stack_pointer; //CPU register. A stack pointer, usually in the form of a hardware register, points to the most recently referenced location on the stack; when the stack has a size of zero, the stack pointer points to the origin of the stack. Possibly be void pointer?
 	int atomic_count; 
 	MsgEnv *receive_env_head;
 	MsgEnv *receive_env_tail;
 	MsgEnv *ip_free_msgQ; //used only by iprocesses to have their own set of free env
+	//~ char ip_state[10]; //stores whether iprocess is executing or idle
 	int ip_status; //Status of IProc
 	struct PCB *next;
 
@@ -81,6 +82,7 @@ typedef struct pcbHT
 //ready Q
 typedef struct readyQ
 {
+	
 	pcbHT *p0;
 	pcbHT *p1;
 	pcbHT *p2;
@@ -125,7 +127,7 @@ readyQ *ptr_readyQ;
 pcbHT *ptr_blocked_on_receiveQ;
 pcbHT *ptr_blocked_on_requestQ;
 
-free_envQ *ptr_free_envQ;
+MsgEnv *ptr_free_envQ;
 
 sendTrcBfr *TBsend;
 recvTrcBfr *TBreceive;
