@@ -2,7 +2,7 @@
 #include "include/RTX.h"
 
 int main(){
-	
+	Intialization()
 	return 0;
 }
 
