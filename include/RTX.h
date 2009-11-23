@@ -9,8 +9,9 @@
 #include "global.h"
 #include <stdlib.h>
 #include <math.h>
-
+#define NUMB_PROC 8
 /*Function Headers*/
+int terminate()
 #endif
 
 

@@ -35,10 +35,34 @@ void atomic(bool status)
 			sigprocmask(SIG_SETMASK, &oldmask, NULL);
 		}
 	}
-
-
 }
 
+A=1
+    B=2
+    C=3
+    NULL=4
+    CCI=5
+    CRT=6
+    TIMER=7
+    KEYBOARD=8
+    
+int terminate(){
+    atomic(1)
+    
+    for (int i=1; i<=NUMB_PROC; i++)
+        free(PCB_finder(i));
+   
+    MsgEnv *temp;  
+    for(temp = ptr_free_envQ; temp!=NULL; temp=temp->next)
+         free(temp);
+  
+    //kill shared memory        
+     
+    atomic(0)
+    printf("SIGNAL RECEIVED..TERMINATING RTX");
+    
+    }
+    
 void ProcessA()
 {}
 
