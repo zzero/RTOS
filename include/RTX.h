@@ -11,7 +11,13 @@
 #include <math.h>
 #define NUMB_PROC 8
 /*Function Headers*/
+
+void ProcessA();
+void ProcessB();
+void ProcessC();
+void CCI();
 int terminate()
+
 #endif
 
 

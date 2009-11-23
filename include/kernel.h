@@ -4,6 +4,7 @@
 #include <setjmp.h>
 #include <signal.h>
 
+
 #ifndef KERNEL_H
 #define KERNEL_H
 
@@ -182,6 +183,10 @@ PCB *deque_PCB_from_readyQ();
 void process_switch();
 void context_switch(jmp_buf *previous, jmp_buf *next);
 void null_process();
+void CRT_I_Proc();
+void Timer_I_Proc();
+void KB_I_Proc();
+
 
 #endif
 
