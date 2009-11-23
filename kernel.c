@@ -1,4 +1,4 @@
-#include "include/kernel.h"
+#include "kernel.h"
 
 #define STACKSIZE 16384 //whats this
 
