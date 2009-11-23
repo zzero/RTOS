@@ -21,13 +21,13 @@ PCB *PCB_finder(int pid){
 	}
 }
 
-#FIXME: possibly place this in another file?
+//#FIXME: possibly place this in another file?
 void itoa(int numb, char *buffer){
 	sprintf(buffer, "%d", numb);
 }
 	
 
-MsgEnv* K_request_process_status(MsgEnv *msg_env)
+/*MsgEnv* K_request_process_status(MsgEnv *msg_env)
 {
 	PCB *temp;
 	char *buffer;
@@ -58,7 +58,7 @@ MsgEnv* K_request_process_status(MsgEnv *msg_env)
 
 	return msg_env;
 	
-}
+}*/ //fix the iota function to take the right number of parameters
 	
 int K_change_priority(int new_priority, int target_process_id)
 {
@@ -168,7 +168,7 @@ int K_get_console_chars(MsgEnv *msg_env)
 	return return_value;
 }
 				
-int K_get_trace_buffers(MsgEnv *msg_env)
+/*int K_get_trace_buffers(MsgEnv *msg_env)
 {
 	char *sendtrc_buf = "sent: \n";
 	char *rcvtrc_buf = "received: \n";
@@ -207,7 +207,7 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 	int return_value = K_send_message(msg_env->dest_id, msg_env);
 	
 	return return_value;
-}
+}*/ //fix iota func
 
 int K_release_processor()
 {
@@ -221,7 +221,7 @@ int K_release_processor()
 	return SUCCESS;
 }
 	
-int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
+/*int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
 {
 	msg_env->type = TIMER_REQUEST;
 	msg_env->num_clock_ticks = time_delay;
@@ -233,7 +233,7 @@ int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
 	int return_value = K_send_message(current_process->pid, msg_env);
 	
 	return return_value;
-}
+}*/ //fix iota
 
 /*Queues*/
 void enque_msg_to_PCB(MsgEnv *msg_env, PCB* dest){
@@ -332,7 +332,7 @@ PCB *deque_PCB_from_blocked_on_receiveQ()
 void process_switch()
 {
 	PCB *next_pcb, *old_pcb;
-	next_pcb = rpq_dequeue( ); //get ptr to highest priority ready process
+	next_pcb = deque_PCB_from_readyQ(); //get ptr to highest priority ready process
 	next_pcb->status = EXECUTING;
 	old_pcb = current_process;
 	current_process = next_pcb;
@@ -341,7 +341,7 @@ void process_switch()
 
 void context_switch(jmp_buf *previous, jmp_buf *next)
 {
-	return_code = setjmp(previous); //save the context of the previous process
+	int return_code = setjmp(previous); //save the context of the previous process
 	if (return_code == 0) 
 	{
 		longjmp(next,1); // start the next process from where it left of
