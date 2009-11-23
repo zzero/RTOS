@@ -310,14 +310,14 @@ MsgEnv *deque_msg_from_PCB(PCB* dest){
 
 //FIXME: just a ptr to the head
 void enque_msg_to_free_envQ(MsgEnv *msg_env){
-	ptr_free_envQ->tail->next = msg_env;
-	msg_env->next = NULL;
-	ptr_free_envQ->tail = msg_env;
+	msg_env->next = ptr_free_envQ;
+	ptr_free_envQ = msg_env;
 }
 
 MsgEnv* deque_msg_from_free_envQ(){
-	MsgEnv *to_return = ptr_free_envQ->head;
-	ptr_free_envQ->head = ptr_free_envQ->head->next;
+	MsgEnv *to_return = ptr_free_envQ;
+	ptr_free_envQ = ptr_free_envQ->next;
+
 	to_return->next=NULL;
 	
 	return to_return;
