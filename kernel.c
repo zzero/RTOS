@@ -561,7 +561,11 @@ void Initialization()
 	ptr_blocked_on_receiveQ = (pcbHT*)malloc(sizeof(pcbHT));
 	ptr_blocked_on_receiveQ->head = NULL; //BK
 	ptr_blocked_on_receiveQ->tail = NULL; //BK
+
 	//initialize timing services 
+	TimeoutQ=(MsgEnvHT*)malloc(sizeof(MsgEnvHT));
+	TimeoutQ->head=NULL;
+	TimeoutQ->tail=NULL;
 
 	jmp_buf kernel_buf;
 	
