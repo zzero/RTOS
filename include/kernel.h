@@ -80,6 +80,14 @@ typedef struct pcbHT
 	struct PCB *tail;
 }pcbHT;
 
+//general MsgEnv Q
+typedef struct MsgEnvHT
+{
+	struct MsgEnv *head;
+	struct MsgEnv *tail;
+
+}MsgEnvHT;
+
 //ready Q
 typedef struct readyQ
 {
@@ -138,6 +146,7 @@ recvTrcBfr *TBreceive;
 PCB *timer_i_proc;
 PCB *crt_i_proc;
 PCB *kb_i_proc;
+MsgEnvHT *TimeoutQ;
 
 /*functions*/
 /*Beomjoon*/
