@@ -346,7 +346,7 @@ void sig_handler(int sig_name)
     }
     current_process = save;
     atomic(0);
-<<<<<<< HEAD:RTX.c
+
 }
 
 
@@ -355,9 +355,9 @@ void sig_handler(int sig_name)
 }
 
     
-=======
+
 }    
->>>>>>> tope-work:RTX.c
+
 
 void Initialization()
 {
