@@ -32,7 +32,7 @@ int change_priority(int new_priority, int target_process_id)
 	atomic(0);
 }
 
-int K_send_message(int dest_pid, MsgEnv *msg_env){
+int send_message(int dest_pid, MsgEnv *msg_env)
 	{
 		atomic(1);
 		int temp;
@@ -41,7 +41,7 @@ int K_send_message(int dest_pid, MsgEnv *msg_env){
 		atomic(0);
 	}
 
-int K_request_process_status(MsgEnv *msg_env);
+int request_process_status(MsgEnv *msg_env)
 	{
 		atomic(1);
 		int temp;
@@ -50,7 +50,7 @@ int K_request_process_status(MsgEnv *msg_env);
 		atomic(0);
 	}
 
-int get_trace_buffers(MsgEnv *msg_env);
+int get_trace_buffers(MsgEnv *msg_env)
 	{
 		atomic(1);
 		int temp;
