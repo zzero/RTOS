@@ -445,7 +445,212 @@ void null_process()
 	while(1)
 		K_release_processor();
 }
+void KB_I_Proc()
+{
+     MsgEnv* msgsend;    
+     msgsend = K_receive_message();
+     kb_sm * kb_sm_ptr;
+     char kb_txt[KB_MAXCHAR]={'\0'}; //check
+     
+     
+     if(msgsend != NULL)
+     {
+          
+     
+     if(kb_sm_ptr->status == 1 && kb_sm_ptr -> data[0] != '\0')
+     {
+               int i = 0;
+               for(i = 0; i<KB_MAXCHAR; i++)
+               {
+                       kb_txt[i] = kb_sm_ptr->data[i];
+               }
+     }                  
+     
+     strcpy(msgsend->text_area, kb_txt);
+     K_send_message(CCI, msgsend); //difine CCI_pid as global
+     
+     kb_sm_ptr->status = 0;
+     char kb_txt[KB_MAXCHAR]={'\0'}; //check
+     }
+}
 
+//CRT I Process   ----   Kernel Function
+void CRT_I_Proc()
+{
+     MsgEnv* msgsend;    
+     msgsend = K_receive_message(); 
+     crt_sm * crt_sm_ptr;
+     
+     if(msgsend != NULL)
+     {
+                char crt_txt[CRT_MAXCHAR]={"\0"}; 
+                strcpy(crt_sm_ptr->data, msgsend->text_area); 
+                crt_sm_ptr->status = 1;
+                
+     }
+     
+}
+
+
+void sortMsg(MsgEnv *msg)
+{
+        MsgEnv *append = msg;
+        
+        //adding to an empty list
+        if (TimeoutQ->head == NULL)
+        {
+           TimeoutQ->head = append; 
+           TimeoutQ->tail = append;
+        }
+        
+        //adding to end of list
+        if( append->num_clock_ticks < TimeoutQ->tail->num_clock_ticks )
+        {
+            MsgEnv *temp = TimeoutQ->head; 
+            while(temp != NULL){
+                 temp = temp->next;                  
+            } 
+            temp->next = append;
+            append = NULL;
+           
+            temp = TimeoutQ->head; 
+            
+            while(temp->next != NULL)
+            {
+              temp->num_clock_ticks -= temp->next->num_clock_ticks; 
+            } 
+                     
+        }              
+        
+        //adding to middle of list
+        if(TimeoutQ->head != NULL && TimeoutQ->tail != NULL)
+        {
+            MsgEnv *temp = TimeoutQ->head;
+                
+            while( (temp->next != NULL) && (append->num_clock_ticks < temp->num_clock_ticks) )
+            {
+                 temp = temp->next;                    
+            }
+           
+            append -> next = temp->next; 
+            temp -> next = append;
+            
+            temp = TimeoutQ->head; 
+            while(temp->next != NULL)
+            {
+              temp->num_clock_ticks -= temp->next->num_clock_ticks; 
+            } 
+              
+        }
+        
+        
+        
+}
+
+//Timer I Proess   ----   Kernel Function
+
+
+void Timer_I_Proc()
+{
+     MsgEnv* msg;   
+     msg = K_receive_message(); 
+     
+     while(msg != NULL)
+     {
+        
+        sortMsg(msg);
+                      
+        msg = K_receive_message();
+     }
+    
+    if(TimeoutQ->tail->num_clock_ticks != 0)
+    {
+        TimeoutQ->tail->num_clock_ticks = TimeoutQ->tail->num_clock_ticks - 1;
+        MsgEnv *temp = TimeoutQ->head; 
+        while(temp->next != NULL)
+        {
+           temp->num_clock_ticks -= temp->next->num_clock_ticks; 
+        } 
+    }
+   
+   //verify this process     
+    if(TimeoutQ->tail->num_clock_ticks == 0)
+    {
+        MsgEnv *send;               
+        int temp = TimeoutQ->tail->sender_id;
+        send->sender_id = TimeoutQ->tail->sender_id;
+        send->type = WAKE_UP;
+        TimeoutQ->tail->next = NULL;
+        K_send_message(temp, send);
+        
+    }
+    
+}
+
+
+
+//Clock Process    ----   Kernel Function
+      
+void clock_proc()
+{
+     int clock_time=0;
+     char buffer[CLOCK];
+     char clock[CLOCK]={};
+     MsgEnv* msgsend;
+     msgsend->type = TIMER_REQUEST;
+     
+     MsgEnv* msgdisp;
+     msgsend->type = DISPLAY_REQUEST;
+     
+     K_request_delay(100, WAKE_UP, msgsend);
+     
+     while(msgsend->text_area != itoa(WAKE_UP,buffer)){
+         msgsend = K_receive_message();
+     }
+     
+     msgsend = K_receive_message();  // maybe not needed due to previous line
+     
+     while(msgsend != NULL)
+     {
+         //dequeue msg
+         
+         if(msgsend->type == CLOCK_ON)  //define CLOCK_ON as global double check automated increment
+         {
+             clock_time++;
+             K_request_delay(100, WAKE_UP, msgsend);
+             
+             while(msgsend->text_area != itoa(WAKE_UP,buffer)){
+                  msgsend = K_receive_message();
+              }
+              
+              
+             clock_time++;
+             K_request_delay(100, WAKE_UP, msgsend);
+             while(msgsend->text_area != itoa(WAKE_UP,buffer)){
+                  msgsend = K_receive_message();
+              }
+            itoa(clock_time, clock);
+
+         }   
+         
+         else if(msgsend->type == SET_CLOCK) ///add to header files
+         {
+              strcpy(clock , "00:00:00");
+              //deallocate msg
+              
+         }   
+         
+         msgsend = K_receive_message();        
+     }
+       
+     strcpy(msgdisp->text_area, clock);
+     int check;
+     check = K_send_console_chars(msgdisp);
+     //verify check values
+       
+          
+}
+         
 void Initialization()
 {
 	//variables required for forking
@@ -493,7 +698,7 @@ void Initialization()
 	iTable[4].priority=0;
 	iTable[4].stacksize=STACKSIZE;
 	//int (*fptr)();
-	fptr=CCI();
+	fptr=cci();
 	iTable[4].start_PC=fptr;
 
 	//crt_i_proc
@@ -600,7 +805,7 @@ void Initialization()
 		apcb->ip_free_msgQ=NULL;		
 		apcb->receive_env_head= NULL;
 		apcb->receive_env_tail = NULL;
-		enque_pcb(apcb); //enqueue pcb to the ready queue.
+		enque_PCB_to_readyQ(apcb); //enqueue pcb to the ready queue.
 		//FIXME: We don't even have a function header for this
 
 		if (setjmp (kernel_buf) == 0) 

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
+//#include <cstring>
 #include <math.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -23,12 +24,13 @@
 #define CRT_I_PROC 6
 #define TIMER_I_PROC 7
 #define KB_I_PROC 8
+#define CLOCK_PID 9
 
 /* Function Headers */
 int terminate();
 void ProcessA();
 void ProcessB();
 void ProcessC();
-void CCI();
+void cci();
 
 #endif
