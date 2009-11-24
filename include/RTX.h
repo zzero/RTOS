@@ -13,19 +13,24 @@
 #include "kernel.h"
 #include "../kernel.c"
 
+#define STACKSIZE 16384 //whats this
+#define SK_OFFSET 16
+
 /* Function Headers */
 int terminate();
 void ProcessA();
 void ProcessB();
 void ProcessC();
 void cci();
+void atomic(int status);
+void sig_handler(int sig_name);
 
 typedef struct iTableRow
 {
 	int pid;
 	int priority;
 	int stacksize;
-	int *start_PC;
+	void (*start_PC)(); //Correct me if I am wrong, but start_PC is the ptr to a starting function. It shouldn't be int.(BK)
 }iTableRow;
 
 #endif

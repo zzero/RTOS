@@ -319,12 +319,7 @@ void sig_handler(int sig_name)
     }
     current_process = save;
     atomic(0);
-}
-
-
-}
-
-    
+}    
 
 void Initialization()
 {
@@ -333,70 +328,71 @@ void Initialization()
 	char kb_arg1[20], kb_arg2[20];
 	char crt_arg1[20], crt_arg2[20];
 	
-	iTableRow *iTable=(struct iTableRow*)malloc(sizeof(iTableRow)*8);
-
+	iTableRow *iTable = (struct iTableRow*)malloc(sizeof(iTableRow)*8);
+	
 	//Write to the iTable
 	//Process A
 	iTable[0].pid=1;
 	iTable[0].priority=1;
 	iTable[0].stacksize=STACKSIZE;
-	iTable[0].start_PC=(void(*)())ProcessA;
-	
+	void (*fptr)(); 
+	fptr = &ProcessA;	
+	iTable[0].start_PC=fptr;
+
 	//Process B
 	iTable[1].pid=2;
 	iTable[1].priority=1;
 	iTable[1].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=ProcessB();
-	iTable[1].start_PC=(void(*)())ProcessB;
+	fptr = &ProcessB;
+	iTable[1].start_PC=fptr;
 
 	//Process C
 	iTable[2].pid=3;
 	iTable[2].priority=1;
 	iTable[2].stacksize=STACKSIZE;
-	//int (*fptr)();
-	//fptr=ProcessC();
-	iTable[2].start_PC=(void(*)())ProcessC;
+	fptr = &ProcessC;
+	iTable[2].start_PC=fptr;
 
 	//Null process
 	iTable[3].pid=4;
 	iTable[3].priority=3;
 	iTable[3].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=null_process;
-	iTable[3].start_PC=(void(*)())null_process;
+	fptr=null_process;
+	iTable[3].start_PC=fptr;
 
 	//CCI
 	iTable[4].pid=5;
 	iTable[4].priority=0;
 	iTable[4].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=CCI();
-	iTable[4].start_PC=(void(*)())CCI;
+	fptr=cci;
+	iTable[4].start_PC=fptr;
 
 	//crt_i_proc
 	iTable[5].pid=6;
 	iTable[5].priority=0;
 	iTable[5].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=CRT_I_Proc;
-	iTable[5].start_PC=(void(*)())CRT_I_Proc;
+	fptr=CRT_I_Proc;
+	iTable[5].start_PC=fptr;
 
 	//timer_i_proc
 	iTable[6].pid=7;
 	iTable[6].priority=0;
 	iTable[6].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=Timer_I_Proc;
-	iTable[6].start_PC=(void(*)())Timer_I_Proc;
+	fptr=Timer_I_Proc;
+	iTable[6].start_PC=fptr;
 
 	//kb_i_proc
 	iTable[7].pid=8;
 	iTable[7].priority=0;
 	iTable[7].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=KB_I_Proc;
-	iTable[7].start_PC=(void(*)())KB_I_Proc;
+	fptr=KB_I_Proc;
+	iTable[7].start_PC=fptr;
 
 
 
@@ -407,6 +403,22 @@ void Initialization()
 	TBreceive = (recvTrcBfr*)malloc(sizeof(recvTrcBfr));
 	
 	//BK
+	/*initialize readyQ*/
+	ptr_readyQ->p0 = (pcbHT*)malloc(sizeof(pcbHT));
+	ptr_readyQ->p1 = (pcbHT*)malloc(sizeof(pcbHT));
+	ptr_readyQ->p2 = (pcbHT*)malloc(sizeof(pcbHT));
+	ptr_readyQ->p3 = (pcbHT*)malloc(sizeof(pcbHT));
+	
+	ptr_readyQ->p0->head = NULL;
+	ptr_readyQ->p0->tail = NULL;
+	ptr_readyQ->p1->head = NULL;
+	ptr_readyQ->p1->tail = NULL;
+	ptr_readyQ->p2->head = NULL;
+	ptr_readyQ->p2->tail = NULL;
+	ptr_readyQ->p3->head = NULL;
+	ptr_readyQ->p3->tail = NULL;
+
+	/*initialize trace buffer*/
 	TBsend->sendTrcBfr_head = NULL;
 	TBsend->sendTrcBfr_tail = NULL; 
 	TBreceive->recvTrcBfr_head = NULL;
@@ -415,7 +427,6 @@ void Initialization()
 	MsgEnv *msge;
 	trace *tracex;
 	PCB *apcb;
-	
 	
 	for(i=0; i<10; i++) //create 10 messsage envelopes and add to message envelope Q
 	{		
@@ -429,11 +440,9 @@ void Initialization()
 	{		
 		tracex = (trace*)malloc(sizeof(trace));
 		
-		//~ if(TB->sendTrcBfr_head == NULL)
 		if(TBsend->sendTrcBfr_head == NULL)
 			TBsend->sendTrcBfr_tail = tracex;
 		
-		//~ trace->next=TBsend->sendTrcBfr_head;
 		tracex->next = TBsend->sendTrcBfr_head;
 		TBsend->sendTrcBfr_head = tracex;
 	}
@@ -447,7 +456,6 @@ void Initialization()
 		
 		tracex->next=TBreceive->recvTrcBfr_head;
 		TBreceive->recvTrcBfr_head = tracex;
-
 	}
 	
 	ptr_blocked_on_requestQ = (pcbHT*)malloc(sizeof(pcbHT));
@@ -474,14 +482,13 @@ void Initialization()
 		apcb->stacksize = iTable[i].stacksize;
 		apcb->start_PC = iTable[i].start_PC;
 		apcb->stack_pointer = (char*)malloc(STACKSIZE)+(STACKSIZE)-SK_OFFSET; 
-		//~ apcb->status = "ready"; //BK
 		apcb->status = READY;
 		apcb->ip_status = 1;
 		apcb->ip_free_msgQ=NULL;		
 		apcb->receive_env_head= NULL;
 		apcb->receive_env_tail = NULL;
-		enque_pcb(apcb); //enqueue pcb to the ready queue.
-		//FIXME: We don't even have a function header for this
+		apcb->context = (jmp_buf*)malloc(sizeof(jmp_buf)); //need to initialize jmp_buffer
+		enque_PCB_to_readyQ(apcb); //enqueue pcb to the ready queue.
 
 		if (setjmp (kernel_buf) == 0) 
 		{
@@ -489,8 +496,9 @@ void Initialization()
 
 			#ifdef _sparc
 			_set_sp(jmpsp);
+			printf("heh");
 			#endif
-			if (setjmp (apcb->context) == 0) 
+			if (setjmp (*(apcb->context) )== 0) //BK: setjmp function takes the jmp_buf, not the address of it. You should dereference context ptr (BK)
 			{
 				longjmp (kernel_buf, 1); 
 			}
@@ -499,11 +507,11 @@ void Initialization()
 				void (*tmp_fn)();
 				tmp_fn=(void*) current_process->start_PC;
 				tmp_fn();
-				//current_process->start_PC();
 			}
 		}
-
+		
 	}
+
 
 	//set up PCBs for iprocesses
 	//~ for(i=3; i<6; i++) //FIXME: try not to use numbers like this.. try to define it.

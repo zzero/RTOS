@@ -1,8 +1,5 @@
 #include "include/kernel.h"
 
-#define STACKSIZE 16384 //whats this
-#define SK_OFFSET 16
-
 PCB *PCB_finder(int pid)
 {
 	PCB *temp;
@@ -36,6 +33,8 @@ PCB *PCB_finder(int pid)
 		if (temp->pid==pid)
 			return temp;
 	}
+
+	return NULL;
 }
 
 //FIXME: possibly place this in another file?
@@ -49,11 +48,11 @@ char* itoa(int numb, char *buffer)
 MsgEnv* K_request_process_status(MsgEnv *msg_env)
 {
 	PCB *temp;
-	char *buffer;
+	char *buffer = "";
 	char *pid = "PID: ";
 	char *status = "status: ";
 	char *priority = "priority: ";
-	int num_proc = 0;
+//	int num_proc = 0;
 	
 	for (temp = ptr_blocked_on_requestQ->head; temp!=NULL; temp = temp->next)
 	{
@@ -140,7 +139,7 @@ int K_send_message(int dest_pid, MsgEnv *msg_env)
 	{
 		enque_msg_to_PCB(msg_env, dest_pcb);
 		
-		if(dest_pcb->status = BLOCKED_ON_RECEIVE)
+		if(dest_pcb->status == BLOCKED_ON_RECEIVE)
 			enque_PCB_to_readyQ(dest_pcb);
 	}
 	
@@ -153,7 +152,7 @@ MsgEnv *K_receive_message()
 {
 	while(current_process->receive_env_head == NULL)
 	{
-		if(current_process->status = iPROC)
+		if(current_process->status == iPROC)
 			return NULL;
 		else
 		{
@@ -238,7 +237,7 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 {
 	char *sendtrc_buf = "sent: \n";
 	char *rcvtrc_buf = "received: \n";
-	char *buf;
+	char *buf="";
 	
 	trace *send_temp;
 	trace *receive_temp;
@@ -294,7 +293,7 @@ int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
 	msg_env->type = TIMER_REQUEST;
 	msg_env->num_clock_ticks = time_delay;
 	
-	char *buf;
+	char *buf = "";
 	strcpy(msg_env->text_area,itoa(wakeup_code,buf));
 	msg_env->dest_id = current_process->pid;
 	
@@ -343,20 +342,47 @@ void enque_PCB_to_readyQ(PCB *to_enque)
 	to_enque->status = READY;
 	
 	if (priority == 0){
-		ptr_readyQ->p0->tail->next = to_enque;
-		ptr_readyQ->p0->tail = to_enque;
+		if(ptr_readyQ->p0->head == NULL){
+			ptr_readyQ->p0->head = to_enque;
+			ptr_readyQ->p0->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p0->tail->next = to_enque;
+			ptr_readyQ->p0->tail = to_enque;
+		}
 	}
+	
 	else if (priority == 1){
-		ptr_readyQ->p1->tail->next = to_enque;
-		ptr_readyQ->p1->tail = to_enque;
+		if(ptr_readyQ->p1->head == NULL){
+			ptr_readyQ->p1->head = to_enque;
+			ptr_readyQ->p1->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p1->tail->next = to_enque;
+			ptr_readyQ->p1->tail = to_enque;
+		}
 	}
+	
 	else if (priority == 2){
-		ptr_readyQ->p2->tail->next = to_enque;
-		ptr_readyQ->p2->tail = to_enque;
+		if(ptr_readyQ->p2->head == NULL){
+			ptr_readyQ->p2->head = to_enque;
+			ptr_readyQ->p2->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p2->tail->next = to_enque;
+			ptr_readyQ->p2->tail = to_enque;
+		}
 	}
+	
 	else if (priority == 3){
-		ptr_readyQ->p3->tail->next = to_enque;
-		ptr_readyQ->p3->tail = to_enque;
+		if(ptr_readyQ->p3->head == NULL){
+			ptr_readyQ->p3->head = to_enque;
+			ptr_readyQ->p3->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p3->tail->next = to_enque;
+			ptr_readyQ->p3->tail = to_enque;
+		}
 	}
 }
 
@@ -434,9 +460,9 @@ void process_switch()
 
 void context_switch(jmp_buf *previous, jmp_buf *next)
 {
-	int return_code = setjmp(previous); //save the context of the previous process
+	int return_code = setjmp(*previous); //save the context of the previous process
 	if (return_code == 0) 
-		longjmp(next,1); // start the next process from where it left of	
+		longjmp(*next,1); // start the next process from where it left of	
 }
 
 void null_process()
@@ -567,7 +593,8 @@ void Timer_I_Proc()
    //verify this process     
     if(TimeoutQ->tail->num_clock_ticks == 0)
     {
-        MsgEnv *send;               
+        MsgEnv *send;
+		send = (MsgEnv*)malloc(sizeof(MsgEnv));
         int temp = TimeoutQ->tail->sender_id;
         send->sender_id = TimeoutQ->tail->sender_id;
         send->type = WAKE_UP;
@@ -587,10 +614,13 @@ void clock_proc()
      char buffer[CLOCK];
      char clock[CLOCK]={};
      MsgEnv* msgsend;
+	 msgsend = (MsgEnv*)malloc(sizeof(MsgEnv));
      msgsend->type = TIMER_REQUEST;
      
      MsgEnv* msgdisp;
-     msgsend->type = DISPLAY_REQUEST;
+     msgdisp = (MsgEnv*)malloc(sizeof(MsgEnv));
+	 msgdisp->type = DISPLAY_REQUEST;
+	 
      
      K_request_delay(100, WAKE_UP, msgsend);
      
