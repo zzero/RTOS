@@ -101,7 +101,7 @@ typedef struct PCB
 	int pid;
 	int priority;
 	int stacksize;
-	char *start_PC; // address of the instruction being executed, or the address of the next instruction to be executed. Possibly be void pointer?
+	void(*start_PC)(); // address of the instruction being executed, or the address of the next instruction to be executed. Possibly be void pointer to a function? YES, correct me if I am wrong tho. (BK)
 	jmp_buf *context;
 	char *stack_pointer; //CPU register. A stack pointer, usually in the form of a hardware register, points to the most recently referenced location on the stack; when the stack has a size of zero, the stack pointer points to the origin of the stack. Possibly be void pointer?
 	int atomic_count; 
@@ -130,20 +130,11 @@ typedef struct MsgEnvHT
 //ready Q
 typedef struct readyQ
 {
-	
 	pcbHT *p0;
 	pcbHT *p1;
 	pcbHT *p2;
 	pcbHT *p3;
 }readyQ;
-
-typedef struct iTableRow
-{
-	int pid;
-	int priority;
-	int stacksize;
-	int *start_PC;
-}iTableRow;
 
 typedef struct trace
 {
@@ -191,7 +182,7 @@ MsgEnvHT *TimeoutQ;
 /* Functions */
 
 /*Beomjoon*/
-MsgEnv* K_request_process_status(MsgEnv *msg_env);//FIXME: I NEED TO SEND MSG NOT RETURN!
+int K_request_process_status(MsgEnv *msg_env);
 int K_change_priority(int new_priority, int target_process_id);
 
 int K_release_msg_env(MsgEnv *msg_env);

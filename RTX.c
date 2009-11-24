@@ -1,4 +1,3 @@
-
 #include "include/RTX.h"
 
 int main()
@@ -32,6 +31,33 @@ int change_priority(int new_priority, int target_process_id)
 	return temp;
 	atomic(0);
 }
+
+int send_message(int dest_pid, MsgEnv *msg_env)
+	{
+		atomic(1);
+		int temp;
+		temp = K_send_message(dest_pid, msg_env);
+		return temp;
+		atomic(0);
+	}
+
+int request_process_status(MsgEnv *msg_env)
+	{
+		atomic(1);
+		int temp;
+		temp = K_request_process_status(msg_env);
+		return temp;
+		atomic(0);
+	}
+
+int get_trace_buffers(MsgEnv *msg_env)
+	{
+		atomic(1);
+		int temp;
+		temp = get_trace_buffers(msg_env);
+		return temp;
+		atomic(0);
+	}
 
 void atomic(int status)
 {
@@ -112,13 +138,13 @@ int terminate()
 }
     
 void ProcessA()
-{}
+{return;}
 
 void ProcessB()
-{}
+{return;}
 
 void ProcessC()
-{}
+{return;}
 
 /*Command Console Interface*/
 void cci()
@@ -127,39 +153,32 @@ void cci()
      to kb_i_proc to return latest keyboard input*/  
      
      MsgEnv* CCI_env;    
-     strcpy(CCI_env->text_area,"CCI: ");
+     strcpy(CCI_env->text_area,"CCI: \0");
 	 send_console_chars(CCI_env);
 	 
-	
-     while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	 {  
-           CCI_env =  K_receive_message();
-     }
+	 CCI_env =  K_receive_message();
+     while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
 	 
-     get_console_chars(CCI_env);
      
-     while (CCI_env->type != CONSOLE_INPUT)
-     {
-	       CCI_env = K_receive_message();
-     }
-    
+     get_console_chars(CCI_env);
+     while (CCI_env->type != CONSOLE_INPUT);
+     
+     
      /*Store text of CCI_env into character string, convert to lowercase*/
-     char CCI_store[10]={'\0'};
-     strcpy(CCI_env->text_area,CCI_store);
-     //stolower(CCI_store);
+     char CCI_store[10];
+     strcpy(CCI_store,CCI_env->text_area);
+    // stolower(CCI_store);
      
      /*send message envelope to User Process A*/
      if(CCI_store == "s")
      {
         strcpy(CCI_env->text_area,CCI_store); 
-        send_message(1, CCI_env); // 1 -> refers to USERPROC_A
+        send_message(PROCESSA, CCI_env); // 1 -> refers to USERPROC_A
         
         send_console_chars(CCI_env);
-        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         }
-       
+        CCI_env =  K_receive_message();
+        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
+        
      }
      
      /*Display Process Status of all processes*/
@@ -169,11 +188,9 @@ void cci()
         request_process_status(CCI_env);
         
         send_console_chars(CCI_env);
-        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         }      
-      
+        CCI_env =  K_receive_message();
+        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
+	     
      }
      
      /*Sets CCI wall clock to desired format*/
@@ -182,15 +199,13 @@ void cci()
          strcpy(CCI_env->text_area,CCI_store);
          
          send_console_chars(CCI_env);
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         } 
+         CCI_env =  K_receive_message();
+         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
              
          MsgEnv* CCI_clock;    
          CCI_clock->type = SET_CLOCK;  //declare SET_CLOCK as global
          strcpy(CCI_env->text_area,CCI_store);
-         send_message(CLOCK_PID, CCI_clock); //define CLOCK_PID as global
+         send_message(CLOCK_PID, CCI_clock); //define CLOCK_pid as global
          
      }
      
@@ -200,7 +215,7 @@ void cci()
          MsgEnv* CCI_clock;    
          CCI_clock->type = CLOCK_ON;  //declare SET_CLOCK as global
          strcpy(CCI_env->text_area,CCI_store);
-         send_message(CLOCK_PID, CCI_clock); //define CLOCK_PID as global
+         send_message(CLOCK_PID, CCI_clock); //define CLOCK_pid as global
          
      }
      
@@ -210,10 +225,8 @@ void cci()
          strcpy(CCI_env->text_area," ");
          
         send_console_chars(CCI_env);
-        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         } 
+        CCI_env =  K_receive_message();
+        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
         
      }
      
@@ -225,10 +238,8 @@ void cci()
          get_trace_buffers(CCI_env);
          
          send_console_chars(CCI_env);
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         } 
+         CCI_env =  K_receive_message();
+         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
          
      }
      
@@ -238,27 +249,26 @@ void cci()
          strcpy(CCI_env->text_area,CCI_store);
          
          send_console_chars(CCI_env);
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         } 
+         CCI_env =  K_receive_message();
+         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
          
          sig_handler(SIGINT);
                      
      }
      
      /*Change priority of a specified process*/
-     else if( strcmp(CCI_store[0], "n") == 0)
+     else if( CCI_store[0] == 'n' )
      {
          strcpy(CCI_env->text_area,CCI_store);
          int priority, id; 
-         int i;
+         
+         int i = 0;
          for(i = 0; i<10; i++)
          {
-            if(i == 1 && strcmp(CCI_store[0], " ") == 0 )
+            if(i == 1 && (CCI_store[i] == ' ') )
                 id = CCI_store[i+1];    
             
-            else if(i == 3 && CCI_store[i] == " ")
+            else if(i == 3 && (CCI_store[i] == ' ') )
                  priority = CCI_store[i+1];
              
          }      
@@ -266,11 +276,9 @@ void cci()
          change_priority(priority, id);
          
          send_console_chars(CCI_env);
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         } 
-     
+         CCI_env =  K_receive_message();
+         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
+         
      }
      
      /*User enters blank space*/
@@ -279,12 +287,10 @@ void cci()
          strcpy(CCI_env->text_area,CCI_store);
          
          send_console_chars(CCI_env);
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         }
+         CCI_env =  K_receive_message();
+         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
          
-      } 
+      }
           
 }
 
@@ -340,6 +346,7 @@ void sig_handler(int sig_name)
     }
     current_process = save;
     atomic(0);
+<<<<<<< HEAD:RTX.c
 }
 
 
@@ -348,6 +355,9 @@ void sig_handler(int sig_name)
 }
 
     
+=======
+}    
+>>>>>>> tope-work:RTX.c
 
 void Initialization()
 {
@@ -356,70 +366,71 @@ void Initialization()
 	char kb_arg1[20], kb_arg2[20];
 	char crt_arg1[20], crt_arg2[20];
 	
-	iTableRow *iTable=(struct iTableRow*)malloc(sizeof(iTableRow)*8);
-
+	iTableRow *iTable = (struct iTableRow*)malloc(sizeof(iTableRow)*8);
+	
 	//Write to the iTable
 	//Process A
 	iTable[0].pid=1;
 	iTable[0].priority=1;
 	iTable[0].stacksize=STACKSIZE;
-	iTable[0].start_PC=(void(*)())ProcessA;
-	
+	void (*fptr)(); 
+	fptr = &ProcessA;	
+	iTable[0].start_PC=fptr;
+
 	//Process B
 	iTable[1].pid=2;
 	iTable[1].priority=1;
 	iTable[1].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=ProcessB();
-	iTable[1].start_PC=(void(*)())ProcessB;
+	fptr = &ProcessB;
+	iTable[1].start_PC=fptr;
 
 	//Process C
 	iTable[2].pid=3;
 	iTable[2].priority=1;
 	iTable[2].stacksize=STACKSIZE;
-	//int (*fptr)();
-	//fptr=ProcessC();
-	iTable[2].start_PC=(void(*)())ProcessC;
+	fptr = &ProcessC;
+	iTable[2].start_PC=fptr;
 
 	//Null process
 	iTable[3].pid=4;
 	iTable[3].priority=3;
 	iTable[3].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=null_process;
-	iTable[3].start_PC=(void(*)())null_process;
+	fptr=null_process;
+	iTable[3].start_PC=fptr;
 
 	//CCI
 	iTable[4].pid=5;
 	iTable[4].priority=0;
 	iTable[4].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=CCI();
-	iTable[4].start_PC=(void(*)())CCI;
+	fptr=cci;
+	iTable[4].start_PC=fptr;
 
 	//crt_i_proc
 	iTable[5].pid=6;
 	iTable[5].priority=0;
 	iTable[5].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=CRT_I_Proc;
-	iTable[5].start_PC=(void(*)())CRT_I_Proc;
+	fptr=CRT_I_Proc;
+	iTable[5].start_PC=fptr;
 
 	//timer_i_proc
 	iTable[6].pid=7;
 	iTable[6].priority=0;
 	iTable[6].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=Timer_I_Proc;
-	iTable[6].start_PC=(void(*)())Timer_I_Proc;
+	fptr=Timer_I_Proc;
+	iTable[6].start_PC=fptr;
 
 	//kb_i_proc
 	iTable[7].pid=8;
 	iTable[7].priority=0;
 	iTable[7].stacksize=STACKSIZE;
 	//int (*fptr)();
-	//fptr=KB_I_Proc;
-	iTable[7].start_PC=(void(*)())KB_I_Proc;
+	fptr=KB_I_Proc;
+	iTable[7].start_PC=fptr;
 
 
 
@@ -430,6 +441,22 @@ void Initialization()
 	TBreceive = (recvTrcBfr*)malloc(sizeof(recvTrcBfr));
 	
 	//BK
+	/*initialize readyQ*/
+	ptr_readyQ->p0 = (pcbHT*)malloc(sizeof(pcbHT));
+	ptr_readyQ->p1 = (pcbHT*)malloc(sizeof(pcbHT));
+	ptr_readyQ->p2 = (pcbHT*)malloc(sizeof(pcbHT));
+	ptr_readyQ->p3 = (pcbHT*)malloc(sizeof(pcbHT));
+	
+	ptr_readyQ->p0->head = NULL;
+	ptr_readyQ->p0->tail = NULL;
+	ptr_readyQ->p1->head = NULL;
+	ptr_readyQ->p1->tail = NULL;
+	ptr_readyQ->p2->head = NULL;
+	ptr_readyQ->p2->tail = NULL;
+	ptr_readyQ->p3->head = NULL;
+	ptr_readyQ->p3->tail = NULL;
+
+	/*initialize trace buffer*/
 	TBsend->sendTrcBfr_head = NULL;
 	TBsend->sendTrcBfr_tail = NULL; 
 	TBreceive->recvTrcBfr_head = NULL;
@@ -438,7 +465,6 @@ void Initialization()
 	MsgEnv *msge;
 	trace *tracex;
 	PCB *apcb;
-	
 	
 	for(i=0; i<10; i++) //create 10 messsage envelopes and add to message envelope Q
 	{		
@@ -452,11 +478,9 @@ void Initialization()
 	{		
 		tracex = (trace*)malloc(sizeof(trace));
 		
-		//~ if(TB->sendTrcBfr_head == NULL)
 		if(TBsend->sendTrcBfr_head == NULL)
 			TBsend->sendTrcBfr_tail = tracex;
 		
-		//~ trace->next=TBsend->sendTrcBfr_head;
 		tracex->next = TBsend->sendTrcBfr_head;
 		TBsend->sendTrcBfr_head = tracex;
 	}
@@ -470,7 +494,6 @@ void Initialization()
 		
 		tracex->next=TBreceive->recvTrcBfr_head;
 		TBreceive->recvTrcBfr_head = tracex;
-
 	}
 	
 	ptr_blocked_on_requestQ = (pcbHT*)malloc(sizeof(pcbHT));
@@ -497,14 +520,13 @@ void Initialization()
 		apcb->stacksize = iTable[i].stacksize;
 		apcb->start_PC = iTable[i].start_PC;
 		apcb->stack_pointer = (char*)malloc(STACKSIZE)+(STACKSIZE)-SK_OFFSET; 
-		//~ apcb->status = "ready"; //BK
 		apcb->status = READY;
 		apcb->ip_status = 1;
 		apcb->ip_free_msgQ=NULL;		
 		apcb->receive_env_head= NULL;
 		apcb->receive_env_tail = NULL;
-		enque_pcb(apcb); //enqueue pcb to the ready queue.
-		//FIXME: We don't even have a function header for this
+		apcb->context = (jmp_buf*)malloc(sizeof(jmp_buf)); //need to initialize jmp_buffer
+		enque_PCB_to_readyQ(apcb); //enqueue pcb to the ready queue.
 
 		if (setjmp (kernel_buf) == 0) 
 		{
@@ -512,8 +534,9 @@ void Initialization()
 
 			#ifdef _sparc
 			_set_sp(jmpsp);
+			printf("heh");
 			#endif
-			if (setjmp (apcb->context) == 0) 
+			if (setjmp (*(apcb->context) )== 0) //BK: setjmp function takes the jmp_buf, not the address of it. You should dereference context ptr (BK)
 			{
 				longjmp (kernel_buf, 1); 
 			}
@@ -522,11 +545,11 @@ void Initialization()
 				void (*tmp_fn)();
 				tmp_fn=(void*) current_process->start_PC;
 				tmp_fn();
-				//current_process->start_PC();
 			}
 		}
-
+		
 	}
+
 
 	//set up PCBs for iprocesses
 	//~ for(i=3; i<6; i++) //FIXME: try not to use numbers like this.. try to define it.
@@ -676,3 +699,4 @@ void Initialization()
 
 	deque_PCB_from_readyQ();
 }
+

@@ -1,30 +1,44 @@
+# Project: RTX
 
-## Created by Anjuta
 
-CC = gcc
-CFLAGS = -g -Wall
-OBJECTS = RTX.o
-INCFLAGS = 
-LDFLAGS = -Wl,-rpath,/usr/local/lib
-LIBS = 
+CPP  = g++
+CC   = gcc
 
-all: RTX_project
+RES  = 
+OBJ  = RTX.o kernel.o crt.o keyboard.o $(RES)
+LINKOBJ  = kernel.o crt.o keyboard.o $(RES)
+LIBS =   
+INCS = 
+CXXINCS = 
 
-RTX_project: $(OBJECTS)
-	$(CC) -o RTX $(OBJECTS) $(LDFLAGS) $(LIBS)
+CXXFLAGS = $(CXXINCS)  
+CFLAGS = $(INCS)  
+RM = rm -f
 
-.SUFFIXES:
-.SUFFIXES:	.c .cc .C .cpp .o
 
-.c.o :
-	$(CC) -o $@ -c $(CFLAGS) $< $(INCFLAGS)
+all: myRTX CRT KB
 
-count:
-	wc *.c *.cc *.C *.cpp *.h *.hpp
 
-clean:
-	rm -f *.o
+clean: 
+	${RM} $(OBJ) RTX 
 
-.PHONY: all
-.PHONY: count
-.PHONY: clean
+myRTX: $(OBJ)
+	$(CC) $(LINKOBJ) -g -o "RTX" $(LIBS) -lrt
+
+CRT: crt.o
+	$(CC) crt.o -g -o "CRT" -lrt
+
+KB: keyboard.o
+	$(CC) keyboard.o -g -o "KB" -lrt
+	
+kernel.o: kernel.c
+	$(CC) -c -g kernel.c -o kernel.o $(CFLAGS)
+
+crt.o: crt.c
+	$(CC) -c -g crt.c -o crt.o $(CFLAGS)
+
+keyboard.o: keyboard.c
+	$(CC) -c -g keyboard.c -o keyboard.o $(CFLAGS)
+
+RTX.o: RTX.o
+	$(CC) -c -g RTX.c -o RTX.o $(CFLAGS) 

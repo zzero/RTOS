@@ -1,8 +1,5 @@
 #include "include/kernel.h"
 
-#define STACKSIZE 16384 //whats this
-#define SK_OFFSET 16
-
 PCB *PCB_finder(int pid)
 {
 	PCB *temp;
@@ -36,6 +33,8 @@ PCB *PCB_finder(int pid)
 		if (temp->pid==pid)
 			return temp;
 	}
+
+	return NULL;
 }
 
 //FIXME: possibly place this in another file?
@@ -46,14 +45,15 @@ char* itoa(int numb, char *buffer)
 }
 	
 
-MsgEnv* K_request_process_status(MsgEnv *msg_env)
+int K_request_process_status(MsgEnv *msg_env)
 {
 	PCB *temp;
-	char *buffer;
+	char *buffer = "";
 	char *pid = "PID: ";
 	char *status = "status: ";
 	char *priority = "priority: ";
-	int num_proc = 0;
+	int to_return;
+//	int num_proc = 0;
 	
 	for (temp = ptr_blocked_on_requestQ->head; temp!=NULL; temp = temp->next)
 	{
@@ -74,9 +74,10 @@ MsgEnv* K_request_process_status(MsgEnv *msg_env)
 	strcat (proc_status,"\n");
 	
 	*(msg_env->text_area) = *(proc_status);
-	K_send_message(msg_env->dest_id, msg_env);
+	
+	to_return = K_send_message(msg_env->dest_id, msg_env);
 
-	return msg_env;	
+	return to_return;	
 }
 	
 int K_change_priority(int new_priority, int target_process_id)
@@ -140,7 +141,7 @@ int K_send_message(int dest_pid, MsgEnv *msg_env)
 	{
 		enque_msg_to_PCB(msg_env, dest_pcb);
 		
-		if(dest_pcb->status = BLOCKED_ON_RECEIVE)
+		if(dest_pcb->status == BLOCKED_ON_RECEIVE)
 			enque_PCB_to_readyQ(dest_pcb);
 	}
 	
@@ -153,7 +154,7 @@ MsgEnv *K_receive_message()
 {
 	while(current_process->receive_env_head == NULL)
 	{
-		if(current_process->status = iPROC)
+		if(current_process->status == iPROC)
 			return NULL;
 		else
 		{
@@ -238,7 +239,7 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 {
 	char *sendtrc_buf = "sent: \n";
 	char *rcvtrc_buf = "received: \n";
-	char *buf;
+	char *buf="";
 	
 	trace *send_temp;
 	trace *receive_temp;
@@ -294,7 +295,7 @@ int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
 	msg_env->type = TIMER_REQUEST;
 	msg_env->num_clock_ticks = time_delay;
 	
-	char *buf;
+	char *buf = "";
 	strcpy(msg_env->text_area,itoa(wakeup_code,buf));
 	msg_env->dest_id = current_process->pid;
 	
@@ -343,20 +344,47 @@ void enque_PCB_to_readyQ(PCB *to_enque)
 	to_enque->status = READY;
 	
 	if (priority == 0){
-		ptr_readyQ->p0->tail->next = to_enque;
-		ptr_readyQ->p0->tail = to_enque;
+		if(ptr_readyQ->p0->head == NULL){
+			ptr_readyQ->p0->head = to_enque;
+			ptr_readyQ->p0->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p0->tail->next = to_enque;
+			ptr_readyQ->p0->tail = to_enque;
+		}
 	}
+	
 	else if (priority == 1){
-		ptr_readyQ->p1->tail->next = to_enque;
-		ptr_readyQ->p1->tail = to_enque;
+		if(ptr_readyQ->p1->head == NULL){
+			ptr_readyQ->p1->head = to_enque;
+			ptr_readyQ->p1->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p1->tail->next = to_enque;
+			ptr_readyQ->p1->tail = to_enque;
+		}
 	}
+	
 	else if (priority == 2){
-		ptr_readyQ->p2->tail->next = to_enque;
-		ptr_readyQ->p2->tail = to_enque;
+		if(ptr_readyQ->p2->head == NULL){
+			ptr_readyQ->p2->head = to_enque;
+			ptr_readyQ->p2->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p2->tail->next = to_enque;
+			ptr_readyQ->p2->tail = to_enque;
+		}
 	}
+	
 	else if (priority == 3){
-		ptr_readyQ->p3->tail->next = to_enque;
-		ptr_readyQ->p3->tail = to_enque;
+		if(ptr_readyQ->p3->head == NULL){
+			ptr_readyQ->p3->head = to_enque;
+			ptr_readyQ->p3->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p3->tail->next = to_enque;
+			ptr_readyQ->p3->tail = to_enque;
+		}
 	}
 }
 
@@ -434,9 +462,9 @@ void process_switch()
 
 void context_switch(jmp_buf *previous, jmp_buf *next)
 {
-	int return_code = setjmp(previous); //save the context of the previous process
+	int return_code = setjmp(*previous); //save the context of the previous process
 	if (return_code == 0) 
-		longjmp(next,1); // start the next process from where it left of	
+		longjmp(*next,1); // start the next process from where it left of	
 }
 
 void null_process()
@@ -446,48 +474,39 @@ void null_process()
 }
 void KB_I_Proc()
 {
-     MsgEnv* msgsend;    
-     msgsend = K_receive_message();
-     kb_sm * kb_sm_ptr;
-     char kb_txt[KB_MAXCHAR]={'\0'}; //check
+     MsgEnv * msgsend = K_receive_message();          //allocate msg env to send to cci
+
      
      
-     if(msgsend != NULL)
+     kb_sm * kb_sm_ptr;        //check kernel.h contains declaration
+     char kb_txt[KB_MAXCHAR];  
+     int index = 0;
+     
+     while(kb_sm_ptr->data[index] != '\0')
      {
-          
-     
-     if(kb_sm_ptr->status == 1 && kb_sm_ptr -> data[0] != '\0')
-     {
-               int i = 0;
-               for(i = 0; i<KB_MAXCHAR; i++)
-               {
-                       kb_txt[i] = kb_sm_ptr->data[i];
-               }
-     }                  
+         kb_txt[index] = kb_sm_ptr->data[index];
+         index++;
+     }
+     kb_txt[index] = '\0';
      
      strcpy(msgsend->text_area, kb_txt);
-     K_send_message(CCI, msgsend); //difine CCI_pid as global
-     
-     kb_sm_ptr->status = 0;
-     char kb_txt[KB_MAXCHAR]={'\0'}; //check
-     }
+     K_send_message(CCI, msgsend); //difine CCI_pid as global   
+     kb_sm_ptr->status = 0;    
 }
 
 
 //CRT I Process   ----   Kernel Function
 void CRT_I_Proc()
 {
-     MsgEnv* msgsend;    
-     msgsend = K_receive_message(); 
-     crt_sm * crt_sm_ptr;
-     
-     if(msgsend != NULL)
-     {
-                char crt_txt[CRT_MAXCHAR]={"\0"}; 
-                strcpy(crt_sm_ptr->data, msgsend->text_area); 
-                crt_sm_ptr->status = 1;
-                
-     }
+     MsgEnv* msgrecieved;    
+     msgrecieved = K_receive_message(); 
+     crt_sm * crt_sm_ptr;           //optional?
+
+     //wait for msg to arrive from cci
+     while(msgrecieved == NULL);
+
+     strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
+     crt_sm_ptr->status = 0;
      
 }
 
@@ -576,7 +595,8 @@ void Timer_I_Proc()
    //verify this process     
     if(TimeoutQ->tail->num_clock_ticks == 0)
     {
-        MsgEnv *send;               
+        MsgEnv *send;
+		send = (MsgEnv*)malloc(sizeof(MsgEnv));
         int temp = TimeoutQ->tail->sender_id;
         send->sender_id = TimeoutQ->tail->sender_id;
         send->type = WAKE_UP;
@@ -596,10 +616,13 @@ void clock_proc()
      char buffer[CLOCK];
      char clock[CLOCK]={};
      MsgEnv* msgsend;
+	 msgsend = (MsgEnv*)malloc(sizeof(MsgEnv));
      msgsend->type = TIMER_REQUEST;
      
      MsgEnv* msgdisp;
-     msgsend->type = DISPLAY_REQUEST;
+     msgdisp = (MsgEnv*)malloc(sizeof(MsgEnv));
+	 msgdisp->type = DISPLAY_REQUEST;
+	 
      
      K_request_delay(100, WAKE_UP, msgsend);
      
@@ -650,4 +673,3 @@ void clock_proc()
           
 }
          
-
