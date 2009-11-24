@@ -182,7 +182,7 @@ MsgEnvHT *TimeoutQ;
 /* Functions */
 
 /*Beomjoon*/
-MsgEnv* K_request_process_status(MsgEnv *msg_env);//FIXME: I NEED TO SEND MSG NOT RETURN!
+int K_request_process_status(MsgEnv *msg_env);
 int K_change_priority(int new_priority, int target_process_id);
 
 int K_release_msg_env(MsgEnv *msg_env);

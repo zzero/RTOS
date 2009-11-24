@@ -45,13 +45,14 @@ char* itoa(int numb, char *buffer)
 }
 	
 
-MsgEnv* K_request_process_status(MsgEnv *msg_env)
+int K_request_process_status(MsgEnv *msg_env)
 {
 	PCB *temp;
 	char *buffer = "";
 	char *pid = "PID: ";
 	char *status = "status: ";
 	char *priority = "priority: ";
+	int to_return;
 //	int num_proc = 0;
 	
 	for (temp = ptr_blocked_on_requestQ->head; temp!=NULL; temp = temp->next)
@@ -73,9 +74,10 @@ MsgEnv* K_request_process_status(MsgEnv *msg_env)
 	strcat (proc_status,"\n");
 	
 	*(msg_env->text_area) = *(proc_status);
-	K_send_message(msg_env->dest_id, msg_env);
+	
+	to_return = K_send_message(msg_env->dest_id, msg_env);
 
-	return msg_env;	
+	return to_return;	
 }
 	
 int K_change_priority(int new_priority, int target_process_id)

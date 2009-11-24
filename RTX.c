@@ -32,6 +32,33 @@ int change_priority(int new_priority, int target_process_id)
 	atomic(0);
 }
 
+int K_send_message(int dest_pid, MsgEnv *msg_env){
+	{
+		atomic(1);
+		int temp;
+		temp = K_send_message(dest_pid, msg_env);
+		return temp;
+		atomic(0);
+	}
+
+int K_request_process_status(MsgEnv *msg_env);
+	{
+		atomic(1);
+		int temp;
+		temp = K_request_process_status(msg_env);
+		return temp;
+		atomic(0);
+	}
+
+int get_trace_buffers(MsgEnv *msg_env);
+	{
+		atomic(1);
+		int temp;
+		temp = get_trace_buffers(msg_env);
+		return temp;
+		atomic(0);
+	}
+
 void atomic(int status)
 {
 	static sigset_t oldmask;
