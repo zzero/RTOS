@@ -111,13 +111,13 @@ int terminate()
 }
     
 void ProcessA()
-{}
+{return;}
 
 void ProcessB()
-{}
+{return;}
 
 void ProcessC()
-{}
+{return;}
 
 /*Command Console Interface*/
 void cci()
