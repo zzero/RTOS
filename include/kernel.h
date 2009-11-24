@@ -1,9 +1,9 @@
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <setjmp.h>
 #include <signal.h>
-
 
 #ifndef KERNEL_H
 #define KERNEL_H
@@ -32,6 +32,12 @@
 #define DISPLAY_CLOCK 4
 #define DISPLAY_ACKNOWLEDGEMENT 5
 #define CONSOLE_INPUT 6
+#define DISPLAY_REQUEST 7   // USED IN CLOCK PROCESS
+
+/*CLOCK PROCESS CONSTANTS*/   //------  ADDED  
+#define CLOCK_ON 1
+#define SET_CLOCK 2
+#define CLOCK 8
 
 //define number of processes
 #define USR_PROC_NUMB 4
@@ -39,8 +45,43 @@
 
 //define default PID
 #define defaultPID -1
-/*Structures*/
+//#define CCI 5 //DOESNT WORK IN RTX.h for some reason!!!
 
+//KB and CRT related
+#define SMSIZE 100
+#define KB_MAXCHAR 80
+#define CRT_MAXCHAR 85
+#define SLEEP 500
+
+/* Process ID */
+#define NUMB_PROC 8
+#define PROCESSA 1
+#define PROCESSB 2
+#define PROCESSC 3
+#define NULL_PROCESS 4
+#define CCI 5
+#define CRT_I_PROC 6
+#define TIMER_I_PROC 7
+#define KB_I_PROC 8
+#define CLOCK_PID 9
+
+/* Structures */
+
+//kb shared memory
+typedef struct
+{
+	int status;				//status bit
+	char data[KB_MAXCHAR];	//data array
+}kb_sm;
+
+//crt shared memory
+typedef struct
+{
+	int status;				//status bit
+	char data[CRT_MAXCHAR];	//data array
+}crt_sm;
+
+//message env
 typedef struct MsgEnv
 {
 	int env_id;
@@ -60,8 +101,8 @@ typedef struct PCB
 	int pid;
 	int priority;
 	int stacksize;
-	void (*start_PC)(); // address of the instruction being executed, or the address of the next instruction to be executed. Possibly be void pointer?
-	jmp_buf context;
+	char *start_PC; // address of the instruction being executed, or the address of the next instruction to be executed. Possibly be void pointer?
+	jmp_buf *context;
 	char *stack_pointer; //CPU register. A stack pointer, usually in the form of a hardware register, points to the most recently referenced location on the stack; when the stack has a size of zero, the stack pointer points to the origin of the stack. Possibly be void pointer?
 	int atomic_count; 
 	MsgEnv *receive_env_head;
@@ -70,7 +111,6 @@ typedef struct PCB
 	//~ char ip_state[10]; //stores whether iprocess is executing or idle
 	int ip_status; //Status of IProc
 	struct PCB *next;
-
 }PCB;
 
 //general pcb Q
@@ -85,7 +125,6 @@ typedef struct MsgEnvHT
 {
 	struct MsgEnv *head;
 	struct MsgEnv *tail;
-
 }MsgEnvHT;
 
 //ready Q
@@ -130,7 +169,8 @@ typedef struct recvTrcBfr
 	int trace_numb;
 }recvTrcBfr;
 
-/*Variables*/
+/* Variables */
+
 /*Beomjoon*/
 PCB *current_process;
 
@@ -148,7 +188,8 @@ PCB *crt_i_proc;
 PCB *kb_i_proc;
 MsgEnvHT *TimeoutQ;
 
-/*functions*/
+/* Functions */
+
 /*Beomjoon*/
 MsgEnv* K_request_process_status(MsgEnv *msg_env);//FIXME: I NEED TO SEND MSG NOT RETURN!
 int K_change_priority(int new_priority, int target_process_id);
@@ -195,11 +236,16 @@ void null_process();
 void CRT_I_Proc();
 void Timer_I_Proc();
 void KB_I_Proc();
-//void ProcessA();
-//void ProcessB();
-//void ProcessC();
-//void CCI();
 
+/* Hyesun - forking related */
+int status;
+int kb_pid, kb_sm_fid;
+int crt_pid, crt_sm_fid;
+char * kb_filename = "kb_sm_file";
+char * crt_filename = "crt_sm_file";
+caddr_t kb_mmap_ptr, crt_mmap_ptr;
+kb_sm * kb_sm_ptr;
+crt_sm * crt_sm_ptr;
 
 #endif
 
