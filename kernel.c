@@ -446,47 +446,38 @@ void null_process()
 }
 void KB_I_Proc()
 {
-     MsgEnv* msgsend;    
-     msgsend = K_receive_message();
-     kb_sm * kb_sm_ptr;
-     char kb_txt[KB_MAXCHAR]={'\0'}; //check
+     MsgEnv * msgsend = K_receive_message();          //allocate msg env to send to cci
+
      
      
-     if(msgsend != NULL)
+     kb_sm * kb_sm_ptr;        //check kernel.h contains declaration
+     char kb_txt[KB_MAXCHAR];  
+     int index = 0;
+     
+     while(kb_sm_ptr->data[index] != '\0')
      {
-          
-     
-     if(kb_sm_ptr->status == 1 && kb_sm_ptr -> data[0] != '\0')
-     {
-               int i = 0;
-               for(i = 0; i<KB_MAXCHAR; i++)
-               {
-                       kb_txt[i] = kb_sm_ptr->data[i];
-               }
-     }                  
+         kb_txt[index] = kb_sm_ptr->data[index]
+         index++;
+     }
+     kb_txt[index] = '\0';
      
      strcpy(msgsend->text_area, kb_txt);
-     K_send_message(CCI, msgsend); //difine CCI_pid as global
-     
-     kb_sm_ptr->status = 0;
-     char kb_txt[KB_MAXCHAR]={'\0'}; //check
-     }
+     K_send_message(CCI, msgsend); //difine CCI_pid as global   
+     kb_sm_ptr->status = 0;    
 }
 
 //CRT I Process   ----   Kernel Function
 void CRT_I_Proc()
 {
-     MsgEnv* msgsend;    
-     msgsend = K_receive_message(); 
-     crt_sm * crt_sm_ptr;
-     
-     if(msgsend != NULL)
-     {
-                char crt_txt[CRT_MAXCHAR]={"\0"}; 
-                strcpy(crt_sm_ptr->data, msgsend->text_area); 
-                crt_sm_ptr->status = 1;
-                
-     }
+     MsgEnv* msgrecieved;    
+     msgrecieved = K_receive_message(); 
+     crt_sm * crt_sm_ptr;           //optional?
+
+     //wait for msg to arrive from cci
+     while(msgrecieved == null);
+
+     strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
+     crt_sm_ptr->status = 0;
      
 }
 

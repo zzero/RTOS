@@ -122,43 +122,37 @@ void ProcessC()
 /*Command Console Interface*/
 void cci()
 {
+     
      /* Output CCI: to display wait for acknowledge, send msg 
      to kb_i_proc to return latest keyboard input*/  
      
      MsgEnv* CCI_env;    
-     strcpy(CCI_env->text_area,"CCI: ");
+     strcpy(CCI_env->text_area,"CCI: \0");
 	 send_console_chars(CCI_env);
 	 
-	
-     while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	 {  
-           CCI_env =  K_receive_message();
-     }
+	 CCI_env =  K_receive_message();
+     while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
 	 
-     get_console_chars(CCI_env);
      
-     while (CCI_env->type != CONSOLE_INPUT)
-     {
-	       CCI_env = K_receive_message();
-     }
-    
+     get_console_chars(CCI_env);
+     while (CCI_env->type != CONSOLE_INPUT);
+     
+     
      /*Store text of CCI_env into character string, convert to lowercase*/
-     char CCI_store[10]={'\0'};
-     strcpy(CCI_env->text_area,CCI_store);
-     //stolower(CCI_store);
+     char CCI_store[10];
+     strcpy(CCI_store,CCI_env->text_area);
+    // stolower(CCI_store);
      
      /*send message envelope to User Process A*/
      if(CCI_store == "s")
      {
         strcpy(CCI_env->text_area,CCI_store); 
-        send_message(1, CCI_env); // 1 -> refers to USERPROC_A
+        send_message(PROCESSA, CCI_env); // 1 -> refers to USERPROC_A
         
         send_console_chars(CCI_env);
-        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         }
-       
+        CCI_env =  K_receive_message();
+        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
+        
      }
      
      /*Display Process Status of all processes*/
@@ -168,11 +162,9 @@ void cci()
         request_process_status(CCI_env);
         
         send_console_chars(CCI_env);
-        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         }      
-      
+        CCI_env =  K_receive_message();
+        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
+	     
      }
      
      /*Sets CCI wall clock to desired format*/
@@ -181,15 +173,13 @@ void cci()
          strcpy(CCI_env->text_area,CCI_store);
          
          send_console_chars(CCI_env);
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         } 
+         CCI_env =  K_receive_message();
+         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
              
          MsgEnv* CCI_clock;    
          CCI_clock->type = SET_CLOCK;  //declare SET_CLOCK as global
          strcpy(CCI_env->text_area,CCI_store);
-         send_message(CLOCK_PID, CCI_clock); //define CLOCK_PID as global
+         send_message(CLOCK_PID, CCI_clock); //define CLOCK_pid as global
          
      }
      
@@ -199,7 +189,7 @@ void cci()
          MsgEnv* CCI_clock;    
          CCI_clock->type = CLOCK_ON;  //declare SET_CLOCK as global
          strcpy(CCI_env->text_area,CCI_store);
-         send_message(CLOCK_PID, CCI_clock); //define CLOCK_PID as global
+         send_message(CLOCK_PID, CCI_clock); //define CLOCK_pid as global
          
      }
      
@@ -209,10 +199,8 @@ void cci()
          strcpy(CCI_env->text_area," ");
          
         send_console_chars(CCI_env);
-        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         } 
+        CCI_env =  K_receive_message();
+        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
         
      }
      
@@ -224,10 +212,8 @@ void cci()
          get_trace_buffers(CCI_env);
          
          send_console_chars(CCI_env);
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         } 
+         CCI_env =  K_receive_message();
+         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
          
      }
      
@@ -237,27 +223,26 @@ void cci()
          strcpy(CCI_env->text_area,CCI_store);
          
          send_console_chars(CCI_env);
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         } 
+         CCI_env =  K_receive_message();
+         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
          
          sig_handler(SIGINT);
                      
      }
      
      /*Change priority of a specified process*/
-     else if( strcmp(CCI_store[0], "n") == 0)
+     else if( CCI_store[0] == 'n' )
      {
          strcpy(CCI_env->text_area,CCI_store);
          int priority, id; 
-         int i;
+         
+         int i = 0;
          for(i = 0; i<10; i++)
          {
-            if(i == 1 && strcmp(CCI_store[0], " ") == 0 )
+            if(i == 1 && (CCI_store[i] == ' ') )
                 id = CCI_store[i+1];    
             
-            else if(i == 3 && CCI_store[i] == " ")
+            else if(i == 3 && (CCI_store[i] == ' ') )
                  priority = CCI_store[i+1];
              
          }      
@@ -265,11 +250,9 @@ void cci()
          change_priority(priority, id);
          
          send_console_chars(CCI_env);
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         } 
-     
+         CCI_env =  K_receive_message();
+         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
+         
      }
      
      /*User enters blank space*/
@@ -278,12 +261,10 @@ void cci()
          strcpy(CCI_env->text_area,CCI_store);
          
          send_console_chars(CCI_env);
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	     {  
-           CCI_env =  K_receive_message();
-         }
+         CCI_env =  K_receive_message();
+         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
          
-      } 
+      }
           
 }
 
