@@ -20,4 +20,12 @@ void ProcessB();
 void ProcessC();
 void cci();
 
+typedef struct iTableRow
+{
+	int pid;
+	int priority;
+	int stacksize;
+	int *start_PC;
+}iTableRow;
+
 #endif

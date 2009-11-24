@@ -456,7 +456,7 @@ void KB_I_Proc()
      
      while(kb_sm_ptr->data[index] != '\0')
      {
-         kb_txt[index] = kb_sm_ptr->data[index]
+         kb_txt[index] = kb_sm_ptr->data[index];
          index++;
      }
      kb_txt[index] = '\0';
@@ -475,7 +475,7 @@ void CRT_I_Proc()
      crt_sm * crt_sm_ptr;           //optional?
 
      //wait for msg to arrive from cci
-     while(msgrecieved == null);
+     while(msgrecieved == NULL);
 
      strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
      crt_sm_ptr->status = 0;
