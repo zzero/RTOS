@@ -345,7 +345,6 @@ void sig_handler(int sig_name)
 
 
 	
-<<<<<<< HEAD:RTX.c
 }
 
     
@@ -564,10 +563,10 @@ void Initialization()
 		
 	}
 
-	sigset (SIGINT, terminate()); //Where should the terminate() function be?
-	sigset (SIGALRM, timer_i_proc);
-	sigset (SIGUSR1, crt_i_proc);
-	sigset (SIGUSR2, kb_i_proc);
+	sigset (SIGINT, sig_handler); //Where should the terminate() function be?
+	sigset (SIGALRM, sig_handler);
+	sigset (SIGUSR1, sig_handler);
+	sigset (SIGUSR2, sig_handler);
 	ualarm(10000, 10000);
 
 	/*--------------------------------FORK----------------------------------*/
