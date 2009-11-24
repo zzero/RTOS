@@ -1,5 +1,4 @@
 #include "include/kernel.h"
-#include "include/RTX.h"
 
 #define STACKSIZE 16384 //whats this
 #define SK_OFFSET 16

@@ -44,13 +44,25 @@
 
 //define default PID
 #define defaultPID -1
-#define CCI 5 //DOESNT WORK IN RTX.h for some reason!!!
+//#define CCI 5 //DOESNT WORK IN RTX.h for some reason!!!
 
 //KB and CRT related
 #define SMSIZE 100
 #define KB_MAXCHAR 80
 #define CRT_MAXCHAR 85
 #define SLEEP 500
+
+/* Process ID */
+#define NUMB_PROC 8
+#define PROCESSA 1
+#define PROCESSB 2
+#define PROCESSC 3
+#define NULL_PROCESS 4
+#define CCI 5
+#define CRT_I_PROC 6
+#define TIMER_I_PROC 7
+#define KB_I_PROC 8
+#define CLOCK_PID 9
 
 /* Structures */
 
