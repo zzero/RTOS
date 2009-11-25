@@ -515,7 +515,7 @@ void Initialization()
 		apcb->ip_free_msgQ=NULL;		
 		apcb->receive_env_head= NULL;
 		apcb->receive_env_tail = NULL;
-		apcb->context = (jmp_buf*)malloc(sizeof(jmp_buf)); //need to initialize jmp_buffer
+		//apcb->context = (jmp_buf*)malloc(sizeof(jmp_buf)); //need to initialize jmp_buffer
 		enque_PCB_to_readyQ(apcb); //enqueue pcb to the ready queue.
 
 		if (setjmp (kernel_buf) == 0) 
@@ -681,6 +681,7 @@ void Initialization()
 	/*--------------------------------DONE FORK----------------------------------*/
 
 
-	//~ deque_PCB_from_readyQ();
+	current_process=deque_PCB_from_readyQ();
+    longjmp (current_process->context, 1);
 }
 

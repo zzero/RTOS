@@ -102,7 +102,7 @@ typedef struct PCB
 	int priority;
 	int stacksize;
 	void(*start_PC)(); // address of the instruction being executed, or the address of the next instruction to be executed. Possibly be void pointer to a function? YES, correct me if I am wrong tho. (BK)
-	jmp_buf *context;
+	jmp_buf context;
 	char *stack_pointer; //CPU register. A stack pointer, usually in the form of a hardware register, points to the most recently referenced location on the stack; when the stack has a size of zero, the stack pointer points to the origin of the stack. Possibly be void pointer?
 	int atomic_count; 
 	MsgEnv *receive_env_head;
