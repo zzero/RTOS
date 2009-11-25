@@ -40,8 +40,8 @@
 #define CLOCK 8
 
 //define number of processes
-#define USR_PROC_NUMB 4
-#define iPROC_NUMB 7
+#define USR_PROC_NUMB 5
+#define iPROC_NUMB 3
 
 //define default PID
 #define defaultPID -1

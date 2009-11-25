@@ -33,7 +33,7 @@ PCB *PCB_finder(int pid)
 		if (temp->pid==pid)
 			return temp;
 	}
-
+	
 	return NULL;
 }
 
@@ -53,7 +53,6 @@ int K_request_process_status(MsgEnv *msg_env)
 	char *status = "status: ";
 	char *priority = "priority: ";
 	int to_return;
-//	int num_proc = 0;
 	
 	for (temp = ptr_blocked_on_requestQ->head; temp!=NULL; temp = temp->next)
 	{
@@ -72,10 +71,9 @@ int K_request_process_status(MsgEnv *msg_env)
 	strcat (proc_status,"\n");
 	strcat (proc_status,priority);
 	strcat (proc_status,"\n");
-	
-	*(msg_env->text_area) = *(proc_status);
-	
-	to_return = K_send_message(msg_env->dest_id, msg_env);
+	//(msg_env->text_area = proc_status;//This will not work b/c they are bunch of ptrs, and can't assign them together
+	strcpy(msg_env->text_area,proc_status);
+	//to_return = K_send_message(msg_env->dest_id, msg_env); TEMPLY COMMENTED OUT FOR TESTING PURPOSE
 
 	return to_return;	
 }
@@ -394,26 +392,28 @@ PCB *deque_PCB_from_readyQ()
 	
 	if(ptr_readyQ->p0->head !=NULL){
 		to_return = ptr_readyQ->p0->head;
-		to_return->next = NULL;
 		ptr_readyQ->p0->head = ptr_readyQ->p0->head->next;
+		to_return->next = NULL;
 	}
 	
 	else if(ptr_readyQ->p1->head !=NULL){
 		to_return = ptr_readyQ->p1->head;
 		ptr_readyQ->p1->head = ptr_readyQ->p1->head->next;
+		to_return->next = NULL;
 	}
 	
 	else if(ptr_readyQ->p2->head !=NULL){
 		to_return = ptr_readyQ->p2->head;
 		ptr_readyQ->p2->head = ptr_readyQ->p2->head->next;
+		to_return->next = NULL;
 	}
 	
 	else if(ptr_readyQ->p3->head !=NULL){
 		to_return = ptr_readyQ->p3->head;
 		ptr_readyQ->p3->head = ptr_readyQ->p3->head->next;
+		to_return->next = NULL;
 	}
 	
-	to_return->next = NULL;
 	return to_return;
 }
 

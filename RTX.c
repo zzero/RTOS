@@ -424,6 +424,7 @@ void Initialization()
 
 
 	int i; //BK: What's this?
+	int j;
 	current_process = NULL; //BK
 	ptr_readyQ = (readyQ*)malloc(sizeof(readyQ));
 	TBsend= (sendTrcBfr*)malloc(sizeof(sendTrcBfr));
@@ -519,11 +520,11 @@ void Initialization()
 
 		if (setjmp (kernel_buf) == 0) 
 		{
-			char *jmpsp = apcb->stack_pointer;
+			char *jmpsp;
+			jmpsp = apcb->stack_pointer;
 
 			#ifdef _sparc
 			_set_sp(jmpsp);
-			printf("heh");
 			#endif
 			if (setjmp (*(apcb->context) )== 0) //BK: setjmp function takes the jmp_buf, not the address of it. You should dereference context ptr (BK)
 			{
@@ -539,10 +540,8 @@ void Initialization()
 		
 	}
 
-
 	//set up PCBs for iprocesses
-	//~ for(i=3; i<6; i++) //FIXME: try not to use numbers like this.. try to define it.
-	for(i = USR_PROC_NUMB; i<iPROC_NUMB; i++)
+	for(i = USR_PROC_NUMB; i<(USR_PROC_NUMB+iPROC_NUMB); i++)
 	{
 		apcb = (PCB*)malloc(sizeof(PCB));
 		apcb->pid = iTable[i].pid;
@@ -551,7 +550,7 @@ void Initialization()
 		apcb->stack_pointer = (char*)malloc(STACKSIZE)+(STACKSIZE);	
 		
 		apcb->ip_free_msgQ =NULL; //msg envelopes will be added on next line
-		for(i=0;i<10;i++)
+		for(j = 0; j<10; j++)
 		{
 			msge = (MsgEnv*)malloc(sizeof(MsgEnv));
 			msge->type=0;
@@ -559,22 +558,18 @@ void Initialization()
 			apcb->ip_free_msgQ=msge;
 		}
 		
-		//~ set status of PCB to 'I_PROCESS'
 		apcb->status = iPROC;
 		apcb->ip_status= IDLE;
 		apcb->receive_env_head= NULL;
 		apcb->receive_env_tail = NULL;
 		
-		if(i == 3)
+		if(i == 5)
 			timer_i_proc=apcb;
-		if (i == 4)
+		if (i == 6)
 			crt_i_proc=apcb;
-		if(i == 5)			
-			kb_i_proc=apcb;
-
-		
+		if(i == 7)			
+			kb_i_proc=apcb;	
 	}
-
 	sigset (SIGINT, terminate()); //Where should the terminate() function be?
 	sigset (SIGALRM, timer_i_proc);
 	sigset (SIGUSR1, crt_i_proc);
