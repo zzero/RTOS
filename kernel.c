@@ -40,6 +40,7 @@ PCB *PCB_finder(int pid)
 //FIXME: possibly place this in another file?
 char* itoa(int numb, char *buffer)
 {
+	//printf("\nINSIDE ITOA: %d %s", numb, buffer);)
 	sprintf(buffer, "%d", numb);
 	return buffer;
 }
@@ -48,32 +49,41 @@ char* itoa(int numb, char *buffer)
 int K_request_process_status(MsgEnv *msg_env)
 {
 	PCB *temp;
-	char *buffer;
-	char *pid = "PID: ";
-	char *status = "status: ";
-	char *priority = "priority: ";
+
+	/*
+	char *pid;
+	char *status;
+	char *priority;
+	 */
+	char pid[15];
+	char status[25];
+	char priority[25];
+	strcpy(priority, "priority: ");
+	strcpy(pid,"PID: ");
+	strcpy(status, "status: ");
+
 	int to_return;
 	int i;
-	
+	char buffer[100];
+
 	for(i=1; i<=(USR_PROC_NUMB); i++){
-		/*temp = PCB_finder(i);	
-		printf("\ntemp_PID: %d",temp->pid);
-		strcat (pid,itoa(temp->pid,buffer));
+		temp = PCB_finder(i);
+		strcat (pid, itoa(temp->pid, buffer));
 		strcat (pid,",");
-		strcat (status, itoa(temp->status,buffer));
+		strcat (status, itoa(temp->status, buffer));
 		strcat (status,",");
-		strcat (priority, itoa(temp->priority,buffer));
-		strcat (priority,",");*/
+		strcat (priority, itoa(temp->priority, buffer));
+		strcat (priority,",");
 	}
-	char proc_status[TEXT_AREA_SIZE] = "";
-	strcat (proc_status,pid);
-	strcat (proc_status,"\n");
-	strcat (proc_status,status);
-	strcat (proc_status,"\n");
-	strcat (proc_status,priority);
-	strcat (proc_status,"\n");
-	//(msg_env->text_area = proc_status;//This will not work b/c they are bunch of ptrs, and can't assign them together
+	char proc_status[TEXT_AREA_SIZE];
+	strcpy (proc_status, pid);
+	strcat (proc_status, "\n");
+	strcat (proc_status, status);
+	strcat (proc_status, "\n");
+	strcat (proc_status, priority);
+	strcat (proc_status, "\n");
 	strcpy(msg_env->text_area,proc_status);
+
 	//to_return = K_send_message(msg_env->dest_id, msg_env); TEMPLY COMMENTED OUT FOR TESTING PURPOSE
 
 	return to_return;	

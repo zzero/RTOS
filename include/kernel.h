@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -17,6 +16,19 @@
 #define EXECUTING 1
 #define BLOCKED_ON_REQUEST 2
 #define BLOCKED_ON_RECEIVE 3
+
+/* Process ID */
+#define NUMB_PROC 8
+#define PROCESSA 1
+#define PROCESSB 2
+#define PROCESSC 3
+#define NULL_PROCESS 4
+#define CCI 5
+#define CRT_I_PROC 6
+#define TIMER_I_PROC 7
+#define KB_I_PROC 8
+#define CLOCK_PID 9 //???
+
 //below are used by iproc only
 //iPROC process ID
 #define iPROC 100
@@ -45,7 +57,6 @@
 
 //define default PID
 #define defaultPID -1
-//#define CCI 5 //DOESNT WORK IN RTX.h for some reason!!!
 
 //KB and CRT related
 #define SMSIZE 100
@@ -53,17 +64,7 @@
 #define CRT_MAXCHAR 85
 #define SLEEP 500
 
-/* Process ID */
-#define NUMB_PROC 8
-#define PROCESSA 1
-#define PROCESSB 2
-#define PROCESSC 3
-#define NULL_PROCESS 4
-#define CCI 5
-#define CRT_I_PROC 6
-#define TIMER_I_PROC 7
-#define KB_I_PROC 8
-#define CLOCK_PID 9
+
 
 /* Structures */
 

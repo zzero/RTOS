@@ -149,10 +149,8 @@ void ProcessC()
 /*Command Console Interface*/
 void cci()
 {
-     /* Output CCI: to display wait for acknowledge, send msg 
-     to kb_i_proc to return latest keyboard input*/  
-     
-     MsgEnv* CCI_env;    
+     MsgEnv* CCI_env;
+	 CCI_env = (MsgEnv*)malloc(sizeof(MsgEnv));
      strcpy(CCI_env->text_area,"CCI: \0");
 	 send_console_chars(CCI_env);
 	 
@@ -161,6 +159,7 @@ void cci()
 	 
      
      get_console_chars(CCI_env);
+     CCI_env =  K_receive_message();       // ---- line added s
      while (CCI_env->type != CONSOLE_INPUT);
      
      
@@ -170,7 +169,7 @@ void cci()
     // stolower(CCI_store);
      
      /*send message envelope to User Process A*/
-     if(CCI_store == "s")
+     if(CCI_store[0] == 's' && CCI_store[1] == '\0')
      {
         strcpy(CCI_env->text_area,CCI_store); 
         send_message(PROCESSA, CCI_env); // 1 -> refers to USERPROC_A
@@ -182,7 +181,7 @@ void cci()
      }
      
      /*Display Process Status of all processes*/
-     else if(CCI_store == "ps")
+     else if(CCI_store[0] == 'p' && CCI_store[1] == 's' && CCI_store[2] == '\0' )
      {
         strcpy(CCI_env->text_area,CCI_store); 
         request_process_status(CCI_env);
@@ -194,7 +193,9 @@ void cci()
      }
      
      /*Sets CCI wall clock to desired format*/
-     else if(CCI_store == "c hh:mm:ss")
+     else if(CCI_store[0] == 'c' && CCI_store[1] == ' ' && CCI_store[2] == 'h' 
+             && CCI_store[3] == 'h' && CCI_store[4] == ':' && CCI_store[5] == 'm' && CCI_store[6] == 'm'
+             && CCI_store[7] == ':' && CCI_store[8] == 's' && CCI_store[9] == 's' && CCI_store[10] == '\0')
      {
          strcpy(CCI_env->text_area,CCI_store);
          
@@ -210,7 +211,7 @@ void cci()
      }
      
      /*Display wall clock*/
-     else if(CCI_store =="cd")
+     else if(CCI_store[0] == 'c' && CCI_store[1] == 'd' && CCI_store[2] == '\0')
      {
          MsgEnv* CCI_clock;    
          CCI_clock->type = CLOCK_ON;  //declare SET_CLOCK as global
@@ -220,7 +221,7 @@ void cci()
      }
      
      /*Clear wall clock*/
-     else if(CCI_store == "ct")
+     else if(CCI_store[0] == 'c' && CCI_store[1] == 't' && CCI_store[2] == '\0')
      {
          strcpy(CCI_env->text_area," ");
          
@@ -231,7 +232,7 @@ void cci()
      }
      
      /*Display contents of send and recieve trace buffers*/
-     else if(CCI_store == "b")
+     else if(CCI_store[0] == 'b' && CCI_store[1] == '\0')
      {
          strcpy(CCI_env->text_area,CCI_store);
          
@@ -244,7 +245,7 @@ void cci()
      }
      
      /*Terminate RTX*/
-     else if(CCI_store == "t")
+     else if(CCI_store[0] == 't' && CCI_store[1] == '\0')
      {
          strcpy(CCI_env->text_area,CCI_store);
          
@@ -257,32 +258,29 @@ void cci()
      }
      
      /*Change priority of a specified process*/
-     else if( CCI_store[0] == 'n' )
+     else if( CCI_store[0] == 'n' && CCI_store[1] == ' ' && isdigit(CCI_store[2]) && CCI_store[3] == ' ' && isdigit(CCI_store[4]) 
+              && CCI_store[5] == '\0' )
      {
          strcpy(CCI_env->text_area,CCI_store);
-         int priority, id; 
+         int priority, id;
+         char pri = CCI_store[2];
+         char ID = CCI_store[4]; 
+         priority = static_cast<int>(pri);
+         id = static_cast<int>(id);
          
-         int i = 0;
-         for(i = 0; i<10; i++)
-         {
-            if(i == 1 && (CCI_store[i] == ' ') )
-                id = CCI_store[i+1];    
-            
-            else if(i == 3 && (CCI_store[i] == ' ') )
-                 priority = CCI_store[i+1];
-             
-         }      
+      
+         printf("%c, %d, %d\n", CCI_store[0], priority, id);
+         printf("%c, %c, %c\n", CCI_store[0], CCI_store[2], CCI_store[4]);  
+    //     change_priority(priority, id);
          
-         change_priority(priority, id);
-         
-         send_console_chars(CCI_env);
-         CCI_env =  K_receive_message();
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
+    //     send_console_chars(CCI_env);
+    //     CCI_env =  K_receive_message();
+    //     while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
          
      }
      
      /*User enters blank space*/
-     else if(CCI_store == " ")
+     else if(CCI_store[0] == ' ' && CCI_store[1] == '\0'))   /// replace " "  with ' ' 
      {
          strcpy(CCI_env->text_area,CCI_store);
          
@@ -291,7 +289,6 @@ void cci()
          while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
          
       }
-          
 }
 
 void sig_handler(int sig_name)
@@ -359,7 +356,7 @@ void Initialization()
 	
 	//Write to the iTable
 	//Process A
-	iTable[0].pid=1;
+	iTable[0].pid=PROCESSA;
 	iTable[0].priority=1;
 	iTable[0].stacksize=STACKSIZE;
 	void (*fptr)(); 
@@ -367,7 +364,7 @@ void Initialization()
 	iTable[0].start_PC=fptr;
 
 	//Process B
-	iTable[1].pid=2;
+	iTable[1].pid=PROCESSB;
 	iTable[1].priority=1;
 	iTable[1].stacksize=STACKSIZE;
 	//int (*fptr)();
@@ -375,25 +372,23 @@ void Initialization()
 	iTable[1].start_PC=fptr;
 
 	//Process C
-	iTable[2].pid=3;
-	iTable[2].priority=1;
-	iTable[2].stacksize=STACKSIZE;
+	iTable[2].pid=PROCESSC;
+	iTable[2].priority = 1;
+	iTable[2].stacksize = STACKSIZE;
 	fptr = &ProcessC;
 	iTable[2].start_PC=fptr;
 
 	//Null process
-	iTable[3].pid=4;
-	iTable[3].priority=3;
-	iTable[3].stacksize=STACKSIZE;
-	//int (*fptr)();
-	fptr=null_process;
-	iTable[3].start_PC=fptr;
+	iTable[3].pid= NULL_PROCESS;
+	iTable[3].priority = 3;
+	iTable[3].stacksize = STACKSIZE;
+	fptr = null_process;
+	iTable[3].start_PC = fptr;
 
 	//CCI
 	iTable[4].pid=5;
 	iTable[4].priority=0;
 	iTable[4].stacksize=STACKSIZE;
-	//int (*fptr)();
 	fptr=cci;
 	iTable[4].start_PC=fptr;
 
@@ -401,7 +396,6 @@ void Initialization()
 	iTable[5].pid=6;
 	iTable[5].priority=0;
 	iTable[5].stacksize=STACKSIZE;
-	//int (*fptr)();
 	fptr=CRT_I_Proc;
 	iTable[5].start_PC=fptr;
 
@@ -409,7 +403,6 @@ void Initialization()
 	iTable[6].pid=7;
 	iTable[6].priority=0;
 	iTable[6].stacksize=STACKSIZE;
-	//int (*fptr)();
 	fptr=Timer_I_Proc;
 	iTable[6].start_PC=fptr;
 
@@ -417,11 +410,10 @@ void Initialization()
 	iTable[7].pid=8;
 	iTable[7].priority=0;
 	iTable[7].stacksize=STACKSIZE;
-	//int (*fptr)();
 	fptr=KB_I_Proc;
 	iTable[7].start_PC=fptr;
 
-	int i; //BK: What's this?
+	int i;
 	int j;
 	current_process = NULL; //BK
 	ptr_readyQ = (readyQ*)malloc(sizeof(readyQ));
