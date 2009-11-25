@@ -1,11 +1,11 @@
+#ifndef KERNEL_H
+#define KERNEL_H
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <setjmp.h>
 #include <signal.h>
-
-#ifndef KERNEL_H
-#define KERNEL_H
 
 #define SUCCESS 1
 #define FAIL 0
@@ -45,6 +45,8 @@
 #define DISPLAY_ACKNOWLEDGEMENT 5
 #define CONSOLE_INPUT 6
 #define DISPLAY_REQUEST 7   // USED IN CLOCK PROCESS
+//NUMBER OF MSGES
+#define NUMB_MSG_ENV 10
 
 /*CLOCK PROCESS CONSTANTS*/   //------  ADDED  
 #define CLOCK_ON 1

@@ -84,8 +84,7 @@ int K_request_process_status(MsgEnv *msg_env)
 	strcat (proc_status, "\n");
 	strcpy(msg_env->text_area,proc_status);
 
-	//to_return = K_send_message(msg_env->dest_id, msg_env); TEMPLY COMMENTED OUT FOR TESTING PURPOSE
-
+	to_return = K_send_message(msg_env->dest_id, msg_env); 
 	return to_return;	
 }
 	
@@ -110,7 +109,8 @@ int K_release_msg_env(MsgEnv *msg_env)
 	msg_env->dest_id = defaultPID;
 	msg_env->type = FREE;
 	msg_env->num_clock_ticks = 0;
-	strcpy(msg_env->text_area,"");
+	enque_msg_to_free_envQ(msg_env);
+	strcpy(msg_env->text_area, "");
 	
 	if(ptr_blocked_on_requestQ->head != NULL)
 	{
@@ -154,7 +154,7 @@ int K_send_message(int dest_pid, MsgEnv *msg_env)
 			enque_PCB_to_readyQ(dest_pcb);
 	}
 	
-	trace_send(msg_env->sender_id, msg_env->dest_id, msg_env->type);
+	//trace_send(msg_env->sender_id, msg_env->dest_id, msg_env->type); TMPLY COMMENTED OUT FOR TESTING
 		
 	return SUCCESS;
 }
@@ -304,173 +304,13 @@ int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
 	msg_env->type = TIMER_REQUEST;
 	msg_env->num_clock_ticks = time_delay;
 	
-	char *buf = "";
+	char buf[10];
 	strcpy(msg_env->text_area,itoa(wakeup_code,buf));
 	msg_env->dest_id = current_process->pid;
 	
 	int return_value = K_send_message(current_process->pid, msg_env);
 	
 	return return_value;
-}
-
-/*Queues*/
-void enque_msg_to_PCB(MsgEnv *msg_env, PCB* dest)
-{
-	dest->receive_env_tail->next = msg_env;
-	msg_env->next = NULL;
-	dest->receive_env_tail = msg_env;
-}
-
-MsgEnv *deque_msg_from_PCB(PCB* dest)
-{
-	MsgEnv *to_return = dest->receive_env_head;
-	dest->receive_env_head = dest->receive_env_head->next;
-	to_return->next=NULL;
-	
-	return to_return;
-}
-
-void enque_msg_to_free_envQ(MsgEnv *msg_env)
-{
-	msg_env->next = ptr_free_envQ;
-	ptr_free_envQ = msg_env;
-}
-
-MsgEnv* deque_msg_from_free_envQ()
-{
-	MsgEnv *to_return = ptr_free_envQ;
-	ptr_free_envQ = ptr_free_envQ->next;
-
-	to_return->next=NULL;
-	
-	return to_return;
-}
-	
-void enque_PCB_to_readyQ(PCB *to_enque)
-{
-	int priority = to_enque->priority;
-	to_enque->next = NULL;
-	to_enque->status = READY;
-	
-	if (priority == 0){
-		if(ptr_readyQ->p0->head == NULL){
-			ptr_readyQ->p0->head = to_enque;
-			ptr_readyQ->p0->tail = to_enque;
-		}
-		else{
-			ptr_readyQ->p0->tail->next = to_enque;
-			ptr_readyQ->p0->tail = to_enque;
-		}
-	}
-	
-	else if (priority == 1){
-		if(ptr_readyQ->p1->head == NULL){
-			ptr_readyQ->p1->head = to_enque;
-			ptr_readyQ->p1->tail = to_enque;
-		}
-		else{
-			ptr_readyQ->p1->tail->next = to_enque;
-			ptr_readyQ->p1->tail = to_enque;
-		}
-	}
-	
-	else if (priority == 2){
-		if(ptr_readyQ->p2->head == NULL){
-			ptr_readyQ->p2->head = to_enque;
-			ptr_readyQ->p2->tail = to_enque;
-		}
-		else{
-			ptr_readyQ->p2->tail->next = to_enque;
-			ptr_readyQ->p2->tail = to_enque;
-		}
-	}
-	
-	else if (priority == 3){
-		if(ptr_readyQ->p3->head == NULL){
-			ptr_readyQ->p3->head = to_enque;
-			ptr_readyQ->p3->tail = to_enque;
-		}
-		else{
-			ptr_readyQ->p3->tail->next = to_enque;
-			ptr_readyQ->p3->tail = to_enque;
-		}
-	}
-}
-
-PCB *deque_PCB_from_readyQ()
-{
-	PCB *to_return;
-	
-	if(ptr_readyQ->p0->head !=NULL){
-		to_return = ptr_readyQ->p0->head;
-		ptr_readyQ->p0->head = ptr_readyQ->p0->head->next;
-		
-		if(ptr_readyQ->p0->head==NULL)
-			ptr_readyQ->p0->tail = NULL;
-		to_return->next = NULL;
-	}
-	
-	else if(ptr_readyQ->p1->head !=NULL){
-		to_return = ptr_readyQ->p1->head;
-		ptr_readyQ->p1->head = ptr_readyQ->p1->head->next;
-		
-		if(ptr_readyQ->p1->head==NULL)
-			ptr_readyQ->p1->tail = NULL;
-		to_return->next = NULL;
-	}
-	
-	else if(ptr_readyQ->p2->head !=NULL){
-		to_return = ptr_readyQ->p2->head;
-		ptr_readyQ->p2->head = ptr_readyQ->p2->head->next;
-		
-		if(ptr_readyQ->p2->head==NULL)
-			ptr_readyQ->p2->tail = NULL;
-		to_return->next = NULL;
-	}
-	
-	else if(ptr_readyQ->p3->head !=NULL){
-		to_return = ptr_readyQ->p3->head;
-		ptr_readyQ->p3->head = ptr_readyQ->p3->head->next;
-		
-		if(ptr_readyQ->p3->head==NULL)
-			ptr_readyQ->p3->tail = NULL;
-		to_return->next = NULL;
-	}
-
-	return to_return;
-}
-
-void enque_PCB_to_blocked_on_requestQ(PCB *to_enque)
-{
-	ptr_blocked_on_requestQ->tail->next = to_enque;
-	to_enque->next = NULL;
-	ptr_blocked_on_requestQ->tail = to_enque;
-}
-
-PCB *deque_PCB_from_blocked_on_requestQ()
-{
-	PCB* to_return = ptr_blocked_on_requestQ->head;
-	ptr_blocked_on_requestQ->head = ptr_blocked_on_requestQ->head->next;
-	to_return->next = NULL;
-
-	return to_return;
-}
-
-void enque_PCB_to_blocked_on_receiveQ(PCB *to_enque)
-{
-	ptr_blocked_on_receiveQ->tail->next = to_enque;
-	to_enque->next = NULL;
-	ptr_blocked_on_receiveQ->tail = to_enque;
-}
-
-PCB *deque_PCB_from_blocked_on_receiveQ()
-{
-	PCB* to_return = ptr_blocked_on_receiveQ->head;
-	ptr_blocked_on_receiveQ->head = ptr_blocked_on_receiveQ->head->next;
-	to_return->next = NULL;
-
-	return to_return;
-	
 }
 
 void process_switch()
@@ -487,7 +327,7 @@ void context_switch(jmp_buf *previous, jmp_buf *next)
 {
 	int return_code = setjmp(*previous); //save the context of the previous process
 	if (return_code == 0) 
-		longjmp(*next,1); // start the next process from where it left of	
+		longjmp(*next, 1); // start the next process from where it left of	
 }
 
 void null_process()
@@ -696,4 +536,191 @@ void clock_proc()
           
 }
 
+/*Queues*/
+void enque_msg_to_PCB(MsgEnv *msg_env, PCB* dest)
+{
+	if(dest->receive_env_head == NULL){
+		dest->receive_env_head = msg_env;
+		dest->receive_env_tail = msg_env;
+	}
+	else{
+		dest->receive_env_tail->next = msg_env;
+		dest->receive_env_tail = msg_env;
+	}
+	
+	msg_env->next = NULL;
+}
 
+MsgEnv *deque_msg_from_PCB(PCB* dest)
+{
+	MsgEnv *to_return = dest->receive_env_head;
+	
+	if (dest->receive_env_head != NULL)
+		dest->receive_env_head = dest->receive_env_head->next;
+	
+	to_return->next=NULL;
+	
+	return to_return;
+}
+
+void enque_msg_to_free_envQ(MsgEnv *msg_env)
+{
+	if(msg_env != NULL){
+		msg_env->next = ptr_free_envQ;
+		ptr_free_envQ = msg_env;
+	}//take care of the other case
+	
+}
+
+MsgEnv* deque_msg_from_free_envQ()
+{
+	MsgEnv *to_return = ptr_free_envQ;
+	ptr_free_envQ = ptr_free_envQ->next;
+
+	to_return->next=NULL;
+	
+	return to_return;
+}
+	
+void enque_PCB_to_readyQ(PCB *to_enque)
+{
+	int priority = to_enque->priority;
+	to_enque->next = NULL;
+	to_enque->status = READY;
+	
+	if (priority == 0){
+		if(ptr_readyQ->p0->head == NULL){
+			ptr_readyQ->p0->head = to_enque;
+			ptr_readyQ->p0->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p0->tail->next = to_enque;
+			ptr_readyQ->p0->tail = to_enque;
+		}
+	}
+	
+	else if (priority == 1){
+		if(ptr_readyQ->p1->head == NULL){
+			ptr_readyQ->p1->head = to_enque;
+			ptr_readyQ->p1->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p1->tail->next = to_enque;
+			ptr_readyQ->p1->tail = to_enque;
+		}
+	}
+	
+	else if (priority == 2){
+		if(ptr_readyQ->p2->head == NULL){
+			ptr_readyQ->p2->head = to_enque;
+			ptr_readyQ->p2->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p2->tail->next = to_enque;
+			ptr_readyQ->p2->tail = to_enque;
+		}
+	}
+	
+	else if (priority == 3){
+		if(ptr_readyQ->p3->head == NULL){
+			ptr_readyQ->p3->head = to_enque;
+			ptr_readyQ->p3->tail = to_enque;
+		}
+		else{
+			ptr_readyQ->p3->tail->next = to_enque;
+			ptr_readyQ->p3->tail = to_enque;
+		}
+	}
+}
+
+PCB *deque_PCB_from_readyQ()
+{
+	PCB *to_return;
+	
+	if(ptr_readyQ->p0->head !=NULL){
+		to_return = ptr_readyQ->p0->head;
+		ptr_readyQ->p0->head = ptr_readyQ->p0->head->next;
+		
+		if(ptr_readyQ->p0->head==NULL)
+			ptr_readyQ->p0->tail = NULL;
+		to_return->next = NULL;
+	}
+	
+	else if(ptr_readyQ->p1->head !=NULL){
+		to_return = ptr_readyQ->p1->head;
+		ptr_readyQ->p1->head = ptr_readyQ->p1->head->next;
+		
+		if(ptr_readyQ->p1->head==NULL)
+			ptr_readyQ->p1->tail = NULL;
+		to_return->next = NULL;
+	}
+	
+	else if(ptr_readyQ->p2->head !=NULL){
+		to_return = ptr_readyQ->p2->head;
+		ptr_readyQ->p2->head = ptr_readyQ->p2->head->next;
+		
+		if(ptr_readyQ->p2->head==NULL)
+			ptr_readyQ->p2->tail = NULL;
+		to_return->next = NULL;
+	}
+	
+	else if(ptr_readyQ->p3->head !=NULL){
+		to_return = ptr_readyQ->p3->head;
+		ptr_readyQ->p3->head = ptr_readyQ->p3->head->next;
+		
+		if(ptr_readyQ->p3->head==NULL)
+			ptr_readyQ->p3->tail = NULL;
+		to_return->next = NULL;
+	}
+
+	return to_return;
+}
+
+void enque_PCB_to_blocked_on_requestQ(PCB *to_enque)
+{
+	if (ptr_blocked_on_requestQ->head == NULL){
+		ptr_blocked_on_requestQ->head = to_enque;
+		ptr_blocked_on_requestQ->tail = to_enque;
+	}
+	else
+		ptr_blocked_on_requestQ->tail->next = to_enque;
+
+	to_enque->next = NULL;
+	ptr_blocked_on_requestQ->tail = to_enque;
+}
+
+PCB *deque_PCB_from_blocked_on_requestQ()
+{
+	PCB* to_return = ptr_blocked_on_requestQ->head;
+
+	if(ptr_blocked_on_requestQ->head != NULL)
+		ptr_blocked_on_requestQ->head = ptr_blocked_on_requestQ->head->next;
+	to_return->next = NULL;
+
+	return to_return;
+}
+
+void enque_PCB_to_blocked_on_receiveQ(PCB *to_enque)
+{
+	if (ptr_blocked_on_receiveQ->head == NULL){
+		ptr_blocked_on_receiveQ->head = to_enque;
+		ptr_blocked_on_receiveQ->tail = to_enque;
+	}
+	else
+		ptr_blocked_on_receiveQ->tail->next = to_enque;
+
+	to_enque->next = NULL;
+	ptr_blocked_on_receiveQ->tail = to_enque;
+}
+
+PCB *deque_PCB_from_blocked_on_receiveQ()
+{
+	PCB* to_return = ptr_blocked_on_receiveQ->head;
+
+	if(ptr_blocked_on_receiveQ->head != NULL)
+		ptr_blocked_on_receiveQ->head = ptr_blocked_on_receiveQ->head->next;
+	to_return->next = NULL;
+
+	return to_return;
+	
+}
