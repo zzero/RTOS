@@ -421,8 +421,6 @@ void Initialization()
 	fptr=KB_I_Proc;
 	iTable[7].start_PC=fptr;
 
-
-
 	int i; //BK: What's this?
 	int j;
 	current_process = NULL; //BK
@@ -501,7 +499,7 @@ void Initialization()
 
 	jmp_buf kernel_buf;
 	
-	//we set it so that user processes are listed first in the IT
+	//~ //we set it so that user processes are listed first in the IT
 	for (i=0; i<USR_PROC_NUMB; i++) //for each user process, do the following
 	{
 		apcb = (PCB*)malloc(sizeof(PCB));
@@ -515,9 +513,7 @@ void Initialization()
 		apcb->ip_free_msgQ=NULL;		
 		apcb->receive_env_head= NULL;
 		apcb->receive_env_tail = NULL;
-		//apcb->context = (jmp_buf*)malloc(sizeof(jmp_buf)); //need to initialize jmp_buffer
 		enque_PCB_to_readyQ(apcb); //enqueue pcb to the ready queue.
-
 		if (setjmp (kernel_buf) == 0) 
 		{
 			char *jmpsp;
@@ -526,7 +522,7 @@ void Initialization()
 			#ifdef _sparc
 			_set_sp(jmpsp);
 			#endif
-			if (setjmp (*(apcb->context) )== 0) //BK: setjmp function takes the jmp_buf, not the address of it. You should dereference context ptr (BK)
+			if (setjmp(apcb->context) == 0) //BK: setjmp function takes the jmp_buf, not the address of it. You should dereference context ptr (BK)
 			{
 				longjmp (kernel_buf, 1); 
 			}
@@ -680,8 +676,7 @@ void Initialization()
 	kb_sm_ptr = (kb_sm *) kb_mmap_ptr;	//char_sm pointer to the memory mapped	
 	/*--------------------------------DONE FORK----------------------------------*/
 
-
-	current_process=deque_PCB_from_readyQ();
-    longjmp (current_process->context, 1);
+	//current_process = deque_PCB_from_readyQ(); CCI NEEDS TO BE FIXED IN ORDER FOR THIS TO RUN!!!!
+	//longjmp ((current_process->context), 1);
 }
 

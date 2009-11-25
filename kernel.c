@@ -56,14 +56,14 @@ int K_request_process_status(MsgEnv *msg_env)
 	int i;
 	
 	for(i=1; i<=(USR_PROC_NUMB); i++){
-		temp = PCB_finder(i);
+		/*temp = PCB_finder(i);	
 		printf("\ntemp_PID: %d",temp->pid);
 		strcat (pid,itoa(temp->pid,buffer));
 		strcat (pid,",");
 		strcat (status, itoa(temp->status,buffer));
 		strcat (status,",");
 		strcat (priority, itoa(temp->priority,buffer));
-		strcat (priority,",");
+		strcat (priority,",");*/
 	}
 	char proc_status[TEXT_AREA_SIZE] = "";
 	strcat (proc_status,pid);
@@ -394,27 +394,39 @@ PCB *deque_PCB_from_readyQ()
 	if(ptr_readyQ->p0->head !=NULL){
 		to_return = ptr_readyQ->p0->head;
 		ptr_readyQ->p0->head = ptr_readyQ->p0->head->next;
+		
+		if(ptr_readyQ->p0->head==NULL)
+			ptr_readyQ->p0->tail = NULL;
 		to_return->next = NULL;
 	}
 	
 	else if(ptr_readyQ->p1->head !=NULL){
 		to_return = ptr_readyQ->p1->head;
 		ptr_readyQ->p1->head = ptr_readyQ->p1->head->next;
+		
+		if(ptr_readyQ->p1->head==NULL)
+			ptr_readyQ->p1->tail = NULL;
 		to_return->next = NULL;
 	}
 	
 	else if(ptr_readyQ->p2->head !=NULL){
 		to_return = ptr_readyQ->p2->head;
 		ptr_readyQ->p2->head = ptr_readyQ->p2->head->next;
+		
+		if(ptr_readyQ->p2->head==NULL)
+			ptr_readyQ->p2->tail = NULL;
 		to_return->next = NULL;
 	}
 	
 	else if(ptr_readyQ->p3->head !=NULL){
 		to_return = ptr_readyQ->p3->head;
 		ptr_readyQ->p3->head = ptr_readyQ->p3->head->next;
+		
+		if(ptr_readyQ->p3->head==NULL)
+			ptr_readyQ->p3->tail = NULL;
 		to_return->next = NULL;
 	}
-	
+
 	return to_return;
 }
 
@@ -458,7 +470,7 @@ void process_switch()
 	next_pcb->status = EXECUTING;
 	old_pcb = current_process;
 	current_process = next_pcb;
-	context_switch(old_pcb->context, next_pcb->context);
+	context_switch(&(old_pcb->context), &(next_pcb->context));
 }
 
 void context_switch(jmp_buf *previous, jmp_buf *next)
@@ -673,4 +685,5 @@ void clock_proc()
        
           
 }
-         
+
+
