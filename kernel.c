@@ -48,14 +48,16 @@ char* itoa(int numb, char *buffer)
 int K_request_process_status(MsgEnv *msg_env)
 {
 	PCB *temp;
-	char *buffer = "";
+	char *buffer;
 	char *pid = "PID: ";
 	char *status = "status: ";
 	char *priority = "priority: ";
 	int to_return;
+	int i;
 	
-	for (temp = ptr_blocked_on_requestQ->head; temp!=NULL; temp = temp->next)
-	{
+	for(i=1; i<=(USR_PROC_NUMB); i++){
+		temp = PCB_finder(i);
+		printf("\ntemp_PID: %d",temp->pid);
 		strcat (pid,itoa(temp->pid,buffer));
 		strcat (pid,",");
 		strcat (status, itoa(temp->status,buffer));
@@ -63,7 +65,6 @@ int K_request_process_status(MsgEnv *msg_env)
 		strcat (priority, itoa(temp->priority,buffer));
 		strcat (priority,",");
 	}
-		
 	char proc_status[TEXT_AREA_SIZE] = "";
 	strcat (proc_status,pid);
 	strcat (proc_status,"\n");

@@ -1,4 +1,3 @@
-<<<<<<< HEAD:RTX.c
 #include "include/RTX.h"
 
 int main()
@@ -575,7 +574,7 @@ void Initialization()
 	sigset (SIGALRM, sig_handler);
 	sigset (SIGUSR1, sig_handler);
 	sigset (SIGUSR2, sig_handler);
-	ualarm(10000, 10000);
+	ualarm(50000, 50000);
 
 	/*--------------------------------FORK----------------------------------*/
 	rtx_pid = getpid();
@@ -610,7 +609,7 @@ void Initialization()
 	}
 
 	/*---------------PARENT CRT SM MAP----------------*/
-	sleep(1);	//to allow crt to execute
+	usleep(1000);	//to allow crt to execute
 
 	crt_mmap_ptr = mmap
 	(
@@ -660,7 +659,7 @@ void Initialization()
 	}
 
 	/*---------------PARENT KB SM MAP----------------*/
-	sleep(1);	//to allow kb to execute
+	usleep(1000);	//to allow kb to execute
 
 	kb_mmap_ptr = mmap
 	(
@@ -682,6 +681,6 @@ void Initialization()
 	/*--------------------------------DONE FORK----------------------------------*/
 
 
-	deque_PCB_from_readyQ();
+	//~ deque_PCB_from_readyQ();
 }
 
