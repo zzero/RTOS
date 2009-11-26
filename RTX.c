@@ -367,7 +367,6 @@ void Initialization()
 	iTable[1].pid=PROCESSB;
 	iTable[1].priority=1;
 	iTable[1].stacksize=STACKSIZE;
-	//int (*fptr)();
 	fptr = &ProcessB;
 	iTable[1].start_PC=fptr;
 
@@ -446,35 +445,58 @@ void Initialization()
 	trace *tracex;
 	PCB *apcb;
 	
-	for(i=0; i<10; i++) //create 10 messsage envelopes and add to message envelope Q
+	for(i=1; i<=NUMB_MSG_ENV; i++) //create 10 messsage envelopes and add to message envelope Q
 	{		
 		msge = (MsgEnv*)malloc(sizeof(MsgEnv));
 		msge->type = FREE;		
-		msge->next = ptr_free_envQ;		
+		msge->env_id = i;
+		msge->next = ptr_free_envQ;
+		msge->sender_id = defaultPID;
+		msge->dest_id = defaultPID;
 		ptr_free_envQ = msge;
 	}
 
-	for(i=0; i<16; i++) //create 16 trace structs and add to send trace buffer
+	for(i=0; i<17; i++) //create 16 trace structs and add to send trace buffer
+	//BK: I've made it to seven teen
 	{		
 		tracex = (trace*)malloc(sizeof(trace));
-		
-		if(TBsend->sendTrcBfr_head == NULL)
+		tracex->dest_pid = defaultPID;
+		tracex-> source_pid = defaultPID;
+		tracex->message_type = FREE;
+		tracex->time_stamp = 0;
+
+
+		if(TBsend->sendTrcBfr_head == NULL){
 			TBsend->sendTrcBfr_tail = tracex;
-		
-		tracex->next = TBsend->sendTrcBfr_head;
+			tracex->next=NULL;
+		}
+
+		else
+			tracex->next = TBsend->sendTrcBfr_head;
+	
 		TBsend->sendTrcBfr_head = tracex;
+		TBsend->trace_numb = 0;
 	}
 	
-	for(i=0; i<16; i++) //create 16 trace structs and add to receive trace buffer
+	for(i=0; i<17; i++) //create 16 trace structs and add to receive trace buffer
 	{		
 		tracex = (trace*)malloc(sizeof(trace));
+		tracex->dest_pid = defaultPID;
+		tracex->source_pid = defaultPID;
+		tracex->message_type = FREE;
+		tracex->time_stamp = 0;
 		
-		if(TBreceive->recvTrcBfr_head == NULL)
+		if(TBreceive->recvTrcBfr_head == NULL){
 			TBreceive->recvTrcBfr_tail = tracex;
+			tracex->next=NULL;
+		}
+		else
+			tracex->next=TBreceive->recvTrcBfr_head;
 		
-		tracex->next=TBreceive->recvTrcBfr_head;
 		TBreceive->recvTrcBfr_head = tracex;
+		TBreceive->trace_numb = 0;
 	}
+	
 	
 	ptr_blocked_on_requestQ = (pcbHT*)malloc(sizeof(pcbHT));
 	ptr_blocked_on_requestQ->head = NULL; //BK

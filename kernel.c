@@ -109,8 +109,8 @@ int K_release_msg_env(MsgEnv *msg_env)
 	msg_env->dest_id = defaultPID;
 	msg_env->type = FREE;
 	msg_env->num_clock_ticks = 0;
-	enque_msg_to_free_envQ(msg_env);
 	strcpy(msg_env->text_area, "");
+	enque_msg_to_free_envQ(msg_env);
 	
 	if(ptr_blocked_on_requestQ->head != NULL)
 	{
@@ -150,8 +150,10 @@ int K_send_message(int dest_pid, MsgEnv *msg_env)
 	{
 		enque_msg_to_PCB(msg_env, dest_pcb);
 		
-		if(dest_pcb->status == BLOCKED_ON_RECEIVE)
+		if(dest_pcb->status == BLOCKED_ON_RECEIVE){
+			deque_PCB_from_blocked_on_receiveQ(dest_pcb);
 			enque_PCB_to_readyQ(dest_pcb);
+		}
 	}
 	
 	//trace_send(msg_env->sender_id, msg_env->dest_id, msg_env->type); TMPLY COMMENTED OUT FOR TESTING
@@ -174,53 +176,68 @@ MsgEnv *K_receive_message()
 	}
 	
 	MsgEnv *msg_env = deque_msg_from_PCB(current_process);
-	trace_receive(msg_env->sender_id, msg_env->dest_id, msg_env->type);
+	//trace_receive(msg_env->sender_id, msg_env->dest_id, msg_env->type);
 	
 	return msg_env;
 }
 
 void trace_send(int sender_id, int dest_id, int type)
 {
-	trace *new_trace = (trace*)malloc(sizeof(trace));
+	trace *new_trace;
+	for(new_trace = TBsend->sendTrcBfr_head; new_trace->dest_pid != defaultPID; new_trace=new_trace->next)
+	{}
+
 	new_trace->dest_pid = dest_id;
 	new_trace->source_pid = sender_id;
 	new_trace->message_type = type;
 	new_trace->time_stamp = 0; //FIXME: what type?
 	
-	if(TBsend->trace_numb>=16)
+	if(TBsend->trace_numb==16)
 	{
-		trace *head = TBsend->sendTrcBfr_head;
-		TBsend->sendTrcBfr_head = TBsend->sendTrcBfr_head->next;
-		free(head);
+		TBsend->sendTrcBfr_head->dest_pid = defaultPID;
+		TBsend->sendTrcBfr_head->source_pid = defaultPID;
+		TBsend->sendTrcBfr_head->message_type = FREE;
+		TBsend->sendTrcBfr_head->time_stamp = 0;
+		TBsend->trace_numb = 1;
+	}
+	else{
+		new_trace->next->dest_pid = defaultPID;
+		new_trace->next->source_pid = defaultPID;
+		new_trace->next->message_type = FREE;
+		new_trace->next->time_stamp = 0;
 	}
 	
-	new_trace->prev = TBsend->sendTrcBfr_tail;
-	new_trace->next = NULL;
-	TBsend->sendTrcBfr_tail->next = new_trace;
 	TBsend->sendTrcBfr_tail = new_trace;
 	TBsend->trace_numb++;
 }
 		
 void trace_receive(int sender_id, int dest_id, int type)
 {
+	trace *new_trace;
+	for(new_trace = TBreceive->recvTrcBfr_head; new_trace->dest_pid != defaultPID; new_trace=new_trace->next)
+	{}
 
-	trace *new_trace = (trace*)malloc(sizeof(trace));
 	new_trace->dest_pid = dest_id;
 	new_trace->source_pid = sender_id;
 	new_trace->message_type = type;
 	new_trace->time_stamp = 0; //FIXME: what type?
 	
-	if(TBreceive->trace_numb>=16)
+	if(TBreceive->trace_numb==16)
 	{
-		trace *head = TBreceive->recvTrcBfr_head;
-		TBreceive->recvTrcBfr_head = TBreceive->recvTrcBfr_head->next;
-		free(head);
+		TBreceive->recvTrcBfr_head->dest_pid = defaultPID;
+		TBreceive->recvTrcBfr_head->source_pid = defaultPID;
+		TBreceive->recvTrcBfr_head->message_type = FREE;
+		TBreceive->recvTrcBfr_head->time_stamp = 0;
+		TBreceive->trace_numb = 1;
+	}
+	else{
+		new_trace->next->dest_pid = defaultPID;
+		new_trace->next->source_pid = defaultPID;
+		new_trace->next->message_type = FREE;
+		new_trace->next->time_stamp = 0;
 	}
 	
-	new_trace->prev = TBreceive->recvTrcBfr_tail;
-	new_trace->next = NULL;
-	TBreceive->recvTrcBfr_tail->next = new_trace;
-	TBreceive->recvTrcBfr_tail = new_trace;
+	TBreceive->recvTrcBfr_tail= new_trace;
 	TBreceive->trace_numb++;
 }
 
@@ -246,15 +263,21 @@ int K_get_console_chars(MsgEnv *msg_env)
 				
 int K_get_trace_buffers(MsgEnv *msg_env)
 {
-	char *sendtrc_buf = "sent: \n";
-	char *rcvtrc_buf = "received: \n";
-	char *buf="";
+	char sendtrc_buf[500];
+	strcpy(sendtrc_buf, "sent: \n");
+
+	char rcvtrc_buf[500];
+	strcpy(rcvtrc_buf, "received: \n");
+	
+	char buf[100];
 	
 	trace *send_temp;
 	trace *receive_temp;
 	
 	for(send_temp = TBsend->sendTrcBfr_head; send_temp != NULL; send_temp=send_temp->next)
 	{
+		if(send_temp->source_pid == defaultPID)
+			send_temp = send_temp->next;
 		strcat(sendtrc_buf, itoa(send_temp->dest_pid, buf));
 		strcat(sendtrc_buf,",");
 		strcat(sendtrc_buf,  itoa(send_temp->source_pid, buf));
@@ -267,6 +290,8 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 	
 	for(receive_temp = TBreceive->recvTrcBfr_head; receive_temp != NULL; receive_temp = receive_temp->next)
 	{
+		if(receive_temp->source_pid == defaultPID)
+			receive_temp = receive_temp->next;
 		strcat(rcvtrc_buf, itoa(receive_temp->dest_pid, buf));
 		strcat(rcvtrc_buf,",");
 		strcat(rcvtrc_buf, itoa(receive_temp->source_pid, buf));
@@ -277,11 +302,14 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 		strcat(rcvtrc_buf,",\n");
 	}
 	
-	char *to_return = "";
-	strcat(to_return, sendtrc_buf);
+	char to_return[TEXT_AREA_SIZE];
+	strcpy(to_return, sendtrc_buf);
+	strcat(to_return, "\n");
 	strcat(to_return, rcvtrc_buf);
-	strcpy(msg_env->text_area,to_return);
 	
+	strcpy(msg_env->text_area,to_return);
+	msg_env->type = GET_TRACE_BUF;
+
 	int return_value = K_send_message(msg_env->dest_id, msg_env);
 	
 	return return_value;
@@ -304,7 +332,7 @@ int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
 	msg_env->type = TIMER_REQUEST;
 	msg_env->num_clock_ticks = time_delay;
 	
-	char buf[10];
+	char buf[100];
 	strcpy(msg_env->text_area,itoa(wakeup_code,buf));
 	msg_env->dest_id = current_process->pid;
 	
@@ -555,10 +583,14 @@ MsgEnv *deque_msg_from_PCB(PCB* dest)
 {
 	MsgEnv *to_return = dest->receive_env_head;
 	
-	if (dest->receive_env_head != NULL)
+	if (dest->receive_env_head != NULL){
 		dest->receive_env_head = dest->receive_env_head->next;
-	
-	to_return->next=NULL;
+
+		if(dest->receive_env_head == NULL)
+			dest->receive_env_tail = NULL;
+
+		to_return->next=NULL;
+	}
 	
 	return to_return;
 }
@@ -693,8 +725,13 @@ PCB *deque_PCB_from_blocked_on_requestQ()
 {
 	PCB* to_return = ptr_blocked_on_requestQ->head;
 
-	if(ptr_blocked_on_requestQ->head != NULL)
+	if(ptr_blocked_on_requestQ->head != NULL){
 		ptr_blocked_on_requestQ->head = ptr_blocked_on_requestQ->head->next;
+
+		if(ptr_blocked_on_requestQ->head == NULL)
+			ptr_blocked_on_requestQ->tail = NULL;
+	}
+	
 	to_return->next = NULL;
 
 	return to_return;
@@ -704,23 +741,43 @@ void enque_PCB_to_blocked_on_receiveQ(PCB *to_enque)
 {
 	if (ptr_blocked_on_receiveQ->head == NULL){
 		ptr_blocked_on_receiveQ->head = to_enque;
-		ptr_blocked_on_receiveQ->tail = to_enque;
 	}
-	else
-		ptr_blocked_on_receiveQ->tail->next = to_enque;
-
-	to_enque->next = NULL;
-	ptr_blocked_on_receiveQ->tail = to_enque;
+	else{
+		to_enque->next = ptr_blocked_on_receiveQ->head;
+		ptr_blocked_on_receiveQ->head = to_enque;
+	}
 }
 
-PCB *deque_PCB_from_blocked_on_receiveQ()
+PCB *deque_PCB_from_blocked_on_receiveQ(PCB *to_deque)
 {
-	PCB* to_return = ptr_blocked_on_receiveQ->head;
+	PCB* to_return;
+	PCB* prev;
 
-	if(ptr_blocked_on_receiveQ->head != NULL)
-		ptr_blocked_on_receiveQ->head = ptr_blocked_on_receiveQ->head->next;
-	to_return->next = NULL;
-
-	return to_return;
+	if(ptr_blocked_on_receiveQ == NULL)
+		return NULL;
 	
+	else{
+		prev = ptr_blocked_on_receiveQ->head;
+
+		if(prev == to_deque){
+			ptr_blocked_on_receiveQ->head = ptr_blocked_on_receiveQ->head->next;
+			prev->next = NULL;
+			return prev;
+		}
+			
+		for (to_return = ptr_blocked_on_receiveQ->head->next;  to_return != to_deque;
+			to_return = to_return->next)
+			{prev = prev->next;}
+		
+		if(to_return != to_deque)
+			return NULL;
+
+		else{
+			if(prev->next != NULL)
+				prev->next = prev->next->next;
+			return to_return;
+			to_return->next = NULL;
+		}
+	}
+
 }

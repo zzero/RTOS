@@ -9,7 +9,7 @@
 
 #define SUCCESS 1
 #define FAIL 0
-#define TEXT_AREA_SIZE 100
+#define TEXT_AREA_SIZE 1000
 
 //process status definition
 #define READY 0
@@ -45,6 +45,7 @@
 #define DISPLAY_ACKNOWLEDGEMENT 5
 #define CONSOLE_INPUT 6
 #define DISPLAY_REQUEST 7   // USED IN CLOCK PROCESS
+#define GET_TRACE_BUF 8
 //NUMBER OF MSGES
 #define NUMB_MSG_ENV 10
 
@@ -145,7 +146,6 @@ typedef struct trace
 	int source_pid;
 	int message_type;
 	int time_stamp; //FIXME: what type?
-	struct trace *prev;
 	struct trace *next;
 }trace;
 
@@ -218,7 +218,7 @@ void enque_PCB_to_blocked_on_requestQ(PCB* to_enque);
 PCB *deque_PCB_from_blocked_on_requestQ();
 
 void enque_PCB_to_blocked_on_receiveQ(PCB *to_enque);
-PCB *deque_PCB_from_blocked_on_receiveQ();
+PCB *deque_PCB_from_blocked_on_receiveQ(PCB *to_deque);
 
 /*Tope*/
 void Initialization();
