@@ -14,7 +14,7 @@ void die()	//kills itself
 int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 {
 	printf("\nKB start\n");
-	
+	kb_filename = "kb_sm_file";
 	//variables
 	caddr_t kb_mmap_ptr;	//ptr to memory mapped
 	kb_sm * kb_sm_ptr;		//ptr to shared memory

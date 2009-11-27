@@ -40,7 +40,6 @@ PCB *PCB_finder(int pid)
 //FIXME: possibly place this in another file?
 char* itoa(int numb, char *buffer)
 {
-	//printf("\nINSIDE ITOA: %d %s", numb, buffer);)
 	sprintf(buffer, "%d", numb);
 	return buffer;
 }
@@ -50,11 +49,6 @@ int K_request_process_status(MsgEnv *msg_env)
 {
 	PCB *temp;
 
-	/*
-	char *pid;
-	char *status;
-	char *priority;
-	 */
 	char pid[15];
 	char status[25];
 	char priority[25];
@@ -343,10 +337,15 @@ int K_request_delay(int time_delay, int wakeup_code, MsgEnv *msg_env)
 
 void process_switch()
 {
-	PCB *next_pcb, *old_pcb;
+	PCB *next_pcb;
+	PCB *old_pcb;
+	
 	next_pcb = deque_PCB_from_readyQ(); //get ptr to highest priority ready process
 	next_pcb->status = EXECUTING;
+	
 	old_pcb = current_process;
+	enque_PCB_to_readyQ(old_pcb);
+	
 	current_process = next_pcb;
 	context_switch(&(old_pcb->context), &(next_pcb->context));
 }
@@ -710,6 +709,7 @@ PCB *deque_PCB_from_readyQ()
 
 void enque_PCB_to_blocked_on_requestQ(PCB *to_enque)
 {
+	to_enque->status = BLOCKED_ON_REQUEST;
 	if (ptr_blocked_on_requestQ->head == NULL){
 		ptr_blocked_on_requestQ->head = to_enque;
 		ptr_blocked_on_requestQ->tail = to_enque;
@@ -739,6 +739,7 @@ PCB *deque_PCB_from_blocked_on_requestQ()
 
 void enque_PCB_to_blocked_on_receiveQ(PCB *to_enque)
 {
+	to_enque->status = BLOCKED_ON_RECEIVE;
 	if (ptr_blocked_on_receiveQ->head == NULL){
 		ptr_blocked_on_receiveQ->head = to_enque;
 	}
@@ -779,5 +780,6 @@ PCB *deque_PCB_from_blocked_on_receiveQ(PCB *to_deque)
 			to_return->next = NULL;
 		}
 	}
+	
 
 }

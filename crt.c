@@ -14,7 +14,7 @@ void die()	//kills itself
 int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 {
 	printf("\nCRT start\n");
-	
+	crt_filename = "crt_sm_file";
 	//variables
 	caddr_t crt_mmap_ptr;	//ptr to memory mapped
 	crt_sm * crt_sm_ptr;	//ptr to shared memory

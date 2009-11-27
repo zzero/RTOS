@@ -11,7 +11,7 @@
 #include <sys/mman.h>
 #include <sys/wait.h>
 #include "kernel.h"
-#include "../kernel.c"
+//#include "../kernel.c"
 
 #define STACKSIZE 16384 //whats this
 #define SK_OFFSET 16

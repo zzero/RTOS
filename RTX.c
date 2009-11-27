@@ -149,11 +149,12 @@ void ProcessC()
 /*Command Console Interface*/
 void cci()
 {
+     printf("CCI");
      /* Output CCI: to display wait for acknowledge, send msg 
      to kb_i_proc to return latest keyboard input*/  
      
      MsgEnv* CCI_env;
-     CCI_env = deque_from_free_envQ();    
+     CCI_env = deque_msg_from_free_envQ();    
      strcpy(CCI_env->text_area,"CCI: \0");
      send_console_chars(CCI_env);
      CCI_env =  K_receive_message();
@@ -267,12 +268,10 @@ void cci()
      {
          strcpy(CCI_env->text_area,CCI_store);
          int priority, id;
-         char pri = CCI_store[2];
-         char ID = CCI_store[4]; 
-         priority = static_cast<int>(pri);
-         id = static_cast<int>(id);
-         
-      
+         const char *pri = CCI_store[2];
+         const char *ID = CCI_store[4]; 
+	 priority = atoi(pri);
+	 id = atoi(ID);
          printf("%c, %d, %d\n", CCI_store[0], priority, id);
          printf("%c, %c, %c\n", CCI_store[0], CCI_store[2], CCI_store[4]);  
     //     change_priority(priority, id);
@@ -284,7 +283,7 @@ void cci()
      }
      
      /*User enters blank space*/
-     else if(CCI_store[0] == ' ' && CCI_store[1] == '\0'))   /// replace " "  with ' ' 
+     else if(CCI_store[0] == ' ' && CCI_store[1] == '\0')   /// replace " "  with ' ' 
      {
          strcpy(CCI_env->text_area,CCI_store);
          
@@ -323,8 +322,8 @@ void sig_handler(int sig_name)
 
     
 	/*CRT Signal*/
-	case SIGUSR1:  				
-          
+	case SIGUSR2:
+
           current_process ->pid = CRT_I_PROC;
 		  current_process->status = EXECUTING;
           CRT_I_Proc();
@@ -332,8 +331,8 @@ void sig_handler(int sig_name)
 		  break; 
 
 	/*KB Signal*/
-	case SIGUSR2:  			
-          
+	case SIGUSR1:
+
           current_process ->pid = KB_I_PROC;
 		  current_process->status = EXECUTING;
           KB_I_Proc();
@@ -591,7 +590,9 @@ void Initialization()
 	sigset (SIGUSR1, sig_handler);
 	sigset (SIGUSR2, sig_handler);
 	ualarm(50000, 50000);
-
+	
+	kb_filename = "kb_sm_file";
+	crt_filename = "crt_sm_file";
 	/*--------------------------------FORK----------------------------------*/
 	rtx_pid = getpid();
 
@@ -696,7 +697,7 @@ void Initialization()
 	kb_sm_ptr = (kb_sm *) kb_mmap_ptr;	//char_sm pointer to the memory mapped	
 	/*--------------------------------DONE FORK----------------------------------*/
 
-	current_process = deque_PCB_from_readyQ(); CCI NEEDS TO BE FIXED IN ORDER FOR THIS TO RUN!!!!
+	current_process = deque_PCB_from_readyQ();
 	longjmp ((current_process->context), 1);
 }
 
