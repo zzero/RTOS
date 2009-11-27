@@ -365,9 +365,6 @@ void null_process()
 void KB_I_Proc()
 {
      MsgEnv * msgsend = K_receive_message();          //allocate msg env to send to cci
-
-     
-     
      kb_sm * kb_sm_ptr;        //check kernel.h contains declaration
      char kb_txt[KB_MAXCHAR];  
      int index = 0;
@@ -389,9 +386,9 @@ void KB_I_Proc()
 void CRT_I_Proc()
 {
      MsgEnv* msgrecieved;    
+     printf("CRTIPRC");
      msgrecieved = K_receive_message(); 
-     crt_sm * crt_sm_ptr;           //optional?
-
+     printf("RECVED MSG?");
      //wait for msg to arrive from cci
      while(msgrecieved == NULL);
 
@@ -461,9 +458,9 @@ void sortMsg(MsgEnv *msg)
 
 void Timer_I_Proc()
 {
+     atomic(1);
      MsgEnv* msg;   
      msg = K_receive_message(); 
-     
      while(msg != NULL)
      {
         
@@ -494,7 +491,7 @@ void Timer_I_Proc()
         K_send_message(temp, send);
         
     }
-    
+    atomic(0);
 }
 
 

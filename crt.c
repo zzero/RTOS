@@ -47,12 +47,14 @@ int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 	crt_sm_ptr = (crt_sm *) crt_mmap_ptr;	//crt_sm pointer to the memory mapped
 	crt_sm_ptr->status = 0;					//0: ready for CRT
 											//1: ready for RTX
-
+	kill(rtx_pid, SIGUSR2);		//intial call to the crt_i_proc
+	
 	while(1)	//until killed by parent
 	{
 		while(crt_sm_ptr->status == 1)
 			usleep(SLEEP);
-
+		
+		//crt_sm_ptr->status = 0;					//0: ready for CRT
 		while(crt_sm_ptr->data[index] != '\0')
 		{
 			c = crt_sm_ptr->data[index];		//get the char to be displayed

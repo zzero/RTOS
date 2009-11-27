@@ -149,10 +149,10 @@ void ProcessC()
 /*Command Console Interface*/
 void cci()
 {
-     printf("CCI");
      /* Output CCI: to display wait for acknowledge, send msg 
      to kb_i_proc to return latest keyboard input*/  
-     
+     printf("\nInside CCI\n");
+
      MsgEnv* CCI_env;
      CCI_env = deque_msg_from_free_envQ();    
      strcpy(CCI_env->text_area,"CCI: \0");
@@ -298,8 +298,17 @@ void cci()
 
 void sig_handler(int sig_name)
 {
-	/*Disable Signals, save pointer to currently active PCB*/
 	atomic(1);
+	printf("INSIDE SIG HANDLER");
+	
+	printf("\n\nsigrecevied: %d\n", sig_name);
+	printf("\nSIGUSR1 %d\n", SIGUSR1);
+	printf("SIGUSR2: %d\n", SIGUSR2);
+	printf("SIGINT: %d\n", SIGINT);
+	printf("SIGALARM: %d\n", SIGALRM);
+	
+	
+	/*Disable Signals, save pointer to currently active PCB*/
 	PCB* save = current_process;  
 	
 	/*Realize Signal, excecute appropriate action*/
@@ -313,31 +322,33 @@ void sig_handler(int sig_name)
 	
 	/*Timing Signal - service delay requests, complement UALRM*/
 	case SIGALRM:  //Alarm Signal (timing)
-		  
-          current_process ->pid = TIMER_I_PROC;
-		  current_process->status = EXECUTING;
-          Timer_I_Proc();
-		  current_process->status = IDLE;
-          break;
+	current_process ->pid = TIMER_I_PROC;
+	current_process->status = EXECUTING;
+	Timer_I_Proc();
+	current_process->status = IDLE;
+        break;
 
     
 	/*CRT Signal*/
 	case SIGUSR2:
-
-          current_process ->pid = CRT_I_PROC;
-		  current_process->status = EXECUTING;
-          CRT_I_Proc();
-		  current_process->status = IDLE;
-		  break; 
+		if(current_process != NULL)
+			enque_PCB_to_readyQ(current_process);
+		else{
+			current_process = crt_i_proc;
+			current_process->status = EXECUTING;
+		}
+		CRT_I_Proc();
+		//current_process->status = IDLE;
+		break; 
 
 	/*KB Signal*/
 	case SIGUSR1:
 
-          current_process ->pid = KB_I_PROC;
-		  current_process->status = EXECUTING;
-          KB_I_Proc();
-          current_process->status = IDLE;
-		  break; 
+	current_process ->pid = KB_I_PROC;
+	current_process->status = EXECUTING;
+	KB_I_Proc();
+	current_process->status = IDLE;
+	break; 
 
 	default:	
         printf("Unknown Signal!\n");
@@ -540,7 +551,7 @@ void Initialization()
 
 			#ifdef _sparc
 			_set_sp(jmpsp);
-			#endif
+			#endif // ASM??? comment this out....??
 			if (setjmp(apcb->context) == 0) //BK: setjmp function takes the jmp_buf, not the address of it. You should dereference context ptr (BK)
 			{
 				longjmp (kernel_buf, 1); 
@@ -589,7 +600,9 @@ void Initialization()
 	sigset (SIGALRM, sig_handler);
 	sigset (SIGUSR1, sig_handler);
 	sigset (SIGUSR2, sig_handler);
-	ualarm(50000, 50000);
+	//ualarm(50000, 50000);
+	
+	/*--------------------------------------right now, CRT does not lrun--------------------------------------*/
 	
 	kb_filename = "kb_sm_file";
 	crt_filename = "crt_sm_file";
@@ -597,6 +610,8 @@ void Initialization()
 	rtx_pid = getpid();
 
 	/*--------------------------CRT FORK---------------------------*/
+	printf("\nFORKING STRATRING...\n");
+	
 	crt_sm_fid = open(crt_filename, O_RDWR | O_CREAT | O_EXCL, (mode_t) 0755 );
 	if (crt_sm_fid < 0)
 	{
@@ -616,9 +631,10 @@ void Initialization()
 
 	//use fork to duplicate current process
 	crt_pid = fork();
+	
 	if(crt_pid == 0)
 	{
-		execl("./crt", "crt", crt_arg1, crt_arg2, (char *)0);
+		execl("./CRT", "CRT", crt_arg1, crt_arg2, (char *)0);
 
 		//should not reach here, but if it does, clean up and exit
 		printf("crt initialization failed");
@@ -668,7 +684,7 @@ void Initialization()
 	kb_pid = fork();
 	if(kb_pid == 0)
 	{
-		execl("./keyboard", "keyboard", kb_arg1, kb_arg2, (char *)0);
+		execl("./KB", "KB", kb_arg1, kb_arg2, (char *)0);
 
 		//should not reach here, but if it does, clean up and exit
 		printf("KB initialization failed");

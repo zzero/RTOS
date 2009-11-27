@@ -18,9 +18,11 @@ RM = rm -f
 
 all: myRTX CRT KB
 
+cur:
+	${RM} kb_sm_file crt_sm_file RTX.o
 
 clean: 
-	${RM} $(OBJ) myRTX CRT KB kb_sm_file crt_sm_file
+	${RM} $(OBJ) myRTX CRT KB kb_sm_file crt_sm_file *.o
 
 myRTX: $(OBJ)
 	$(CC) $(LINKOBJ) -g -o "myRTX" $(LIBS) -lrt
