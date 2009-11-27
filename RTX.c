@@ -149,13 +149,17 @@ void ProcessC()
 /*Command Console Interface*/
 void cci()
 {
+     /* Output CCI: to display wait for acknowledge, send msg 
+     to kb_i_proc to return latest keyboard input*/  
+     
      MsgEnv* CCI_env;
-	 CCI_env = (MsgEnv*)malloc(sizeof(MsgEnv));
+     CCI_env = deque_from_free_envQ();    
      strcpy(CCI_env->text_area,"CCI: \0");
-	 send_console_chars(CCI_env);
-	 
-	 CCI_env =  K_receive_message();
-     while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
+     send_console_chars(CCI_env);
+     CCI_env =  K_receive_message();
+     
+     while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
+	CCI_env = K_receive_message();
 	 
      
      get_console_chars(CCI_env);
@@ -289,7 +293,9 @@ void cci()
          while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
          
       }
+           
 }
+
 
 void sig_handler(int sig_name)
 {
@@ -690,7 +696,7 @@ void Initialization()
 	kb_sm_ptr = (kb_sm *) kb_mmap_ptr;	//char_sm pointer to the memory mapped	
 	/*--------------------------------DONE FORK----------------------------------*/
 
-	//current_process = deque_PCB_from_readyQ(); CCI NEEDS TO BE FIXED IN ORDER FOR THIS TO RUN!!!!
-	//longjmp ((current_process->context), 1);
+	current_process = deque_PCB_from_readyQ(); CCI NEEDS TO BE FIXED IN ORDER FOR THIS TO RUN!!!!
+	longjmp ((current_process->context), 1);
 }
 
