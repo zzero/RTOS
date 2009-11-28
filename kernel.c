@@ -356,7 +356,7 @@ void process_switch()
 	
 	old_pcb = current_process;
 	enque_PCB_to_readyQ(old_pcb);
-
+	
 	current_process = next_pcb;
 	context_switch(&(old_pcb->context), &(next_pcb->context));
 }
@@ -398,20 +398,21 @@ void CRT_I_Proc()
      MsgEnv* msgrecieved;    
      msgrecieved = K_receive_message(); 
 
-     while(msgrecieved == NULL){
-		msgrecieved = K_receive_message(); 
-		printf("msgreceving\n");
-		     }
-     printf("msg type %d\n",msgrecieved->sender_id);
+     //~ while(msgrecieved == NULL){
+		//~ msgrecieved = K_receive_message(); 
+		//~ printf("msgreceving\n");
+		     //~ }
+     //~ printf("msg type %d\n",msgrecieved->sender_id);
      
      //~ strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
      //~ crt_sm_ptr->status = 0; //,M
-     
-     K_send_message(msgrecieved->sender_id, msgrecieved);
-     printf("CRT I PROC DONE..\n");
-     
-     strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
-     crt_sm_ptr->status = 0; 
+     if(msgrecieved != NULL){
+	     K_send_message(msgrecieved->sender_id, msgrecieved);
+	     printf("CRT I PROC DONE..\n");
+	     
+	     strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
+	     crt_sm_ptr->status = 0; 
+     }
 }
 
 

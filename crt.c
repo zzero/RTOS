@@ -48,14 +48,14 @@ int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 	crt_sm_ptr->status = 1;					//0: ready for CRT
 										//1: ready for RTX
 	
-							//let rtx finish initializing
+	sleep(3);						//let rtx finish initializing
 	kill(rtx_pid, SIGUSR2);		//intial call to the crt_i_proc
 	printf("SIGNAL SENT\n");
 	//printf("signal sent.. CRT sleep\n");
 	while(1)	//until killed by parent
 	{
 		while(crt_sm_ptr->status == 1){
-			sleep(1);
+			usleep(3000);
 		}
 		//crt_sm_ptr->status = 0;					//0: ready for CRT
 		while(crt_sm_ptr->data[index] != '\0')

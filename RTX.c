@@ -41,7 +41,15 @@ int send_message(int dest_pid, MsgEnv *msg_env)
 		atomic(0);
 		return temp;
 	}
-
+MsgEnv *receive_message()
+	{
+		atomic(1);
+		MsgEnv* temp;
+		printf("cur process: %d\n",current_process->pid);
+		temp = K_receive_message();
+		atomic(0);
+		return temp;
+	}
 int request_process_status(MsgEnv *msg_env)
 	{
 		atomic(1);
@@ -169,7 +177,6 @@ void ProcessC()
 
 void sig_handler(int sig_name)
 {
-	atomic(1);
 	printf("INSIDE SIG HANDLER\n");
 	
 	//~ printf("sigrecevied: %d\n", sig_name);
@@ -202,24 +209,24 @@ void sig_handler(int sig_name)
 	    
 		/*CRT Signal*/
 		case SIGUSR2:
-			if(cciHandleCRT == 1){
+			//if(cciHandleCRT == 1){
 				current_process = crt_i_proc;
 				current_process->ip_status = EXECUTING;
 				CRT_I_Proc();
 				current_process->ip_status = IDLE;
 				cciHandleCRT = 0;
-			}
+			//}
 			break; 
 			
 		/*KB Signal*/
 		case SIGUSR1:
-			if(cciHandleKB == 1){
+			//if(cciHandleKB == 1){
 				current_process = kb_i_proc;
 				current_process->ip_status = EXECUTING;
 				KB_I_Proc();
 				current_process->ip_status = IDLE;
 				cciHandleKB = 0;
-			}
+			//}
 			break; 
 
 		default:	
@@ -230,12 +237,9 @@ void sig_handler(int sig_name)
 
     }
     printf("Done signal handling..\n");
-    printf("pid = %x\n\n", save->pid);
+    //~ printf("pid = %x\n\n", save);
     
-    current_process = save;
-    K_release_processor(); 
-    atomic(0);
-    
+    current_process = save;    
 }    
 
 void Initialization()
@@ -569,7 +573,7 @@ void Initialization()
 	
 	if(crt_pid == 0)
 	{
-		sleep(5);
+		//sleep(5);
 		execl("./CRT", "CRT", crt_arg1, crt_arg2, (char *)0);
 
 		//should not reach here, but if it does, clean up and exit
@@ -579,7 +583,7 @@ void Initialization()
 
 	//usleep(1000);	//to allow crt to execute
 
-	//~ /*--------------------------FORK KB------------------------------*/
+	/*--------------------------FORK KB------------------------------*/
 	//~ printf("Fork KB\n");
 	
 	//~ kb_pid = fork();
@@ -596,8 +600,9 @@ void Initialization()
 	//usleep(1000);	//to allow kb to execute
 
 	/*--------------------------------DONE FORK----------------------------------*/
-	
+	printf("COM HERE?\n");
 	current_process = deque_PCB_from_readyQ();
+	current_process->status = EXECUTING;
 	longjmp ((current_process->context), 1);
 }
 
