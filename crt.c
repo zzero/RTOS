@@ -48,7 +48,7 @@ int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 	crt_sm_ptr->status = 1;					//0: ready for CRT
 										//1: ready for RTX
 	
-	usleep(5000);				//let rtx finish initializing
+	//usleep(5000);				//let rtx finish initializing
 	kill(rtx_pid, SIGUSR2);		//intial call to the crt_i_proc
 	printf("CRT.CCCCC\n");
 	//printf("signal sent.. CRT sleep\n");

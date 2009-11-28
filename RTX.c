@@ -73,6 +73,8 @@ void atomic(int status)
 			sigaddset(&newmask, 2); // the CNTRL-C
 			sigaddset(&newmask, SIGUSR1);
 			sigaddset(&newmask, SIGUSR2);
+			sigaddset(&newmask, SIGTTIN);
+			sigaddset(&newmask, SIGTRAP);
 			sigprocmask(SIG_BLOCK, &newmask, &oldmask);
 		}
 	} 
@@ -315,6 +317,7 @@ void cci()
 
 void sig_handler(int sig_name)
 {
+	
 	printf("INSIDE SIG HANDLER\n");
 	
 	printf("sigrecevied: %d\n", sig_name);
@@ -323,7 +326,7 @@ void sig_handler(int sig_name)
 	printf("SIGINT: %d\n", SIGINT);
 	printf("SIGALARM: %d\n", SIGALRM);
 	
-	//atomic(1);
+	//~ atomic(1);
 	/*Disable Signals, save pointer to currently active PCB*/
 	PCB* save = current_process;  
 	
@@ -346,6 +349,7 @@ void sig_handler(int sig_name)
 
     
 	/*CRT Signal*/
+	//case SIGUSR2:
 	case SIGUSR2:
 		if(current_process != NULL)
 			enque_PCB_to_readyQ(current_process);
@@ -356,7 +360,7 @@ void sig_handler(int sig_name)
 		CRT_I_Proc();
 		//current_process->status = IDLE;
 		break; 
-
+		
 	/*KB Signal*/
 	case SIGUSR1:
 
@@ -374,7 +378,7 @@ void sig_handler(int sig_name)
 
     }
     current_process = save;
-    //atomic(0);
+    //~ atomic(0);
 }    
 
 void Initialization()
