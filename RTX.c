@@ -10,8 +10,8 @@ int send_console_chars(MsgEnv *msg_env){
 	atomic(1);
 	int temp;
 	temp = K_send_console_chars(msg_env);
-	return temp;
 	atomic(0);
+	return temp;
 }
 
 int get_console_chars(MsgEnv *msg_env)
@@ -19,8 +19,8 @@ int get_console_chars(MsgEnv *msg_env)
 	atomic(1);
 	int temp;
 	temp = K_get_console_chars(msg_env);
-	return temp;
 	atomic(0);
+	return temp;
 }
 
 int change_priority(int new_priority, int target_process_id)
@@ -28,8 +28,9 @@ int change_priority(int new_priority, int target_process_id)
 	atomic(1);
 	int temp;
 	temp = K_change_priority(new_priority, target_process_id);
-	return temp;
 	atomic(0);
+	return temp;
+	
 }
 
 int send_message(int dest_pid, MsgEnv *msg_env)
@@ -37,8 +38,8 @@ int send_message(int dest_pid, MsgEnv *msg_env)
 		atomic(1);
 		int temp;
 		temp = K_send_message(dest_pid, msg_env);
-		return temp;
 		atomic(0);
+		return temp;
 	}
 
 int request_process_status(MsgEnv *msg_env)
@@ -46,8 +47,8 @@ int request_process_status(MsgEnv *msg_env)
 		atomic(1);
 		int temp;
 		temp = K_request_process_status(msg_env);
-		return temp;
 		atomic(0);
+		return temp;
 	}
 
 int get_trace_buffers(MsgEnv *msg_env)
@@ -55,8 +56,8 @@ int get_trace_buffers(MsgEnv *msg_env)
 		atomic(1);
 		int temp;
 		temp = get_trace_buffers(msg_env);
-		return temp;
 		atomic(0);
+		return temp;
 	}
 
 void atomic(int status)
@@ -69,6 +70,8 @@ void atomic(int status)
 		if (current_process->atomic_count == 1) 
 		{
 			sigemptyset(&newmask);
+		//	sigfillset(&newmask);
+			
 			sigaddset(&newmask, 14); //the alarm signal
 			sigaddset(&newmask, 2); // the CNTRL-C
 			sigaddset(&newmask, SIGUSR1);
@@ -148,237 +151,91 @@ void ProcessA()
 }
 
 void ProcessB()
-{	while(1){
+{	
+	while(1){
 		//printf("PROCESS B RUNNING\n");
 		K_release_processor();
 	}
 }
 
 void ProcessC()
-{	while(1){
+{	
+	while(1){
 		//printf("PROCESS C RUNNING\n");
 		K_release_processor();
 	}
 }
 
-/*Command Console Interface*/
-void cci()
-{
-     /* Output CCI: to display wait for acknowledge, send msg 
-     to kb_i_proc to return latest keyboard input*/  
-     printf("Inside CCI\n");
-
-     MsgEnv* CCI_env;
-     CCI_env = deque_msg_from_free_envQ();    
-     CCI_env->sender_id = CCI;
-     strcpy(CCI_env->text_area,"CCI: \0");
-     send_console_chars(CCI_env);
-
-     CCI_env =  K_receive_message();
-	
-     printf("CCI received msg..?\n");
-	
-     while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
-	CCI_env = K_receive_message();
-	 
-     
-     get_console_chars(CCI_env); //sends msg to kb i proc
-     CCI_env =  K_receive_message();       // ---- line added s
-     while (CCI_env->type != CONSOLE_INPUT);
-     
-     
-     /*Store text of CCI_env into character string, convert to lowercase*/
-     char CCI_store[10];
-     strcpy(CCI_store,CCI_env->text_area);
-    // stolower(CCI_store);
-     
-     /*send message envelope to User Process A*/
-     if(CCI_store[0] == 's' && CCI_store[1] == '\0')
-     {
-        strcpy(CCI_env->text_area,CCI_store); 
-        send_message(PROCESSA, CCI_env); // 1 -> refers to USERPROC_A
-        
-        send_console_chars(CCI_env);
-        CCI_env =  K_receive_message();
-        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
-        
-     }
-     
-     /*Display Process Status of all processes*/
-     else if(CCI_store[0] == 'p' && CCI_store[1] == 's' && CCI_store[2] == '\0' )
-     {
-        strcpy(CCI_env->text_area,CCI_store); 
-        request_process_status(CCI_env);
-        
-        send_console_chars(CCI_env);
-        CCI_env =  K_receive_message();
-        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
-	     
-     }
-     
-     /*Sets CCI wall clock to desired format*/
-     else if(CCI_store[0] == 'c' && CCI_store[1] == ' ' && CCI_store[2] == 'h' 
-             && CCI_store[3] == 'h' && CCI_store[4] == ':' && CCI_store[5] == 'm' && CCI_store[6] == 'm'
-             && CCI_store[7] == ':' && CCI_store[8] == 's' && CCI_store[9] == 's' && CCI_store[10] == '\0')
-     {
-         strcpy(CCI_env->text_area,CCI_store);
-         
-         send_console_chars(CCI_env);
-         CCI_env =  K_receive_message();
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
-             
-         MsgEnv* CCI_clock;    
-         CCI_clock->type = SET_CLOCK;  //declare SET_CLOCK as global
-         strcpy(CCI_env->text_area,CCI_store);
-         send_message(CLOCK_PID, CCI_clock); //define CLOCK_pid as global
-         
-     }
-     
-     /*Display wall clock*/
-     else if(CCI_store[0] == 'c' && CCI_store[1] == 'd' && CCI_store[2] == '\0')
-     {
-         MsgEnv* CCI_clock;    
-         CCI_clock->type = CLOCK_ON;  //declare SET_CLOCK as global
-         strcpy(CCI_env->text_area,CCI_store);
-         send_message(CLOCK_PID, CCI_clock); //define CLOCK_pid as global
-         
-     }
-     
-     /*Clear wall clock*/
-     else if(CCI_store[0] == 'c' && CCI_store[1] == 't' && CCI_store[2] == '\0')
-     {
-         strcpy(CCI_env->text_area," ");
-         
-        send_console_chars(CCI_env);
-        CCI_env =  K_receive_message();
-        while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
-        
-     }
-     
-     /*Display contents of send and recieve trace buffers*/
-     else if(CCI_store[0] == 'b' && CCI_store[1] == '\0')
-     {
-         strcpy(CCI_env->text_area,CCI_store);
-         
-         get_trace_buffers(CCI_env);
-         
-         send_console_chars(CCI_env);
-         CCI_env =  K_receive_message();
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
-         
-     }
-     
-     /*Terminate RTX*/
-     else if(CCI_store[0] == 't' && CCI_store[1] == '\0')
-     {
-         strcpy(CCI_env->text_area,CCI_store);
-         
-         send_console_chars(CCI_env);
-         CCI_env =  K_receive_message();
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
-         
-         sig_handler(SIGINT);
-                     
-     }
-     
-     /*Change priority of a specified process*/
-     else if( CCI_store[0] == 'n' && CCI_store[1] == ' ' && isdigit(CCI_store[2]) && CCI_store[3] == ' ' && isdigit(CCI_store[4]) 
-              && CCI_store[5] == '\0' )
-     {
-         strcpy(CCI_env->text_area,CCI_store);
-         int priority, id;
-         const char *pri = CCI_store[2];
-         const char *ID = CCI_store[4]; 
-	 priority = atoi(pri);
-	 id = atoi(ID);
-         printf("%c, %d, %d\n", CCI_store[0], priority, id);
-         printf("%c, %c, %c\n", CCI_store[0], CCI_store[2], CCI_store[4]);  
-    //     change_priority(priority, id);
-         
-    //     send_console_chars(CCI_env);
-    //     CCI_env =  K_receive_message();
-    //     while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
-         
-     }
-     
-     /*User enters blank space*/
-     else if(CCI_store[0] == ' ' && CCI_store[1] == '\0')   /// replace " "  with ' ' 
-     {
-         strcpy(CCI_env->text_area,CCI_store);
-         
-         send_console_chars(CCI_env);
-         CCI_env =  K_receive_message();
-         while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
-         
-      }
-           
-}
-
 
 void sig_handler(int sig_name)
 {
-	
+	atomic(1);
 	printf("INSIDE SIG HANDLER\n");
 	
-	printf("sigrecevied: %d\n", sig_name);
-	printf("SIGUSR1 %d\n", SIGUSR1);
-	printf("SIGUSR2: %d\n", SIGUSR2);
-	printf("SIGINT: %d\n", SIGINT);
-	printf("SIGALARM: %d\n", SIGALRM);
+	//~ printf("sigrecevied: %d\n", sig_name);
+	//~ printf("SIGUSR1 %d\n", SIGUSR1);
+	//~ printf("SIGUSR2: %d\n", SIGUSR2);
+	//~ printf("SIGINT: %d\n", SIGINT);
+	//~ printf("SIGALARM: %d\n", SIGALRM);
 	
-	//~ atomic(1);
+	
 	/*Disable Signals, save pointer to currently active PCB*/
 	PCB* save = current_process;  
-	
+	//~ enque_PCB_to_ready
 	/*Realize Signal, excecute appropriate action*/
 	switch(sig_name){
 	
-	/*Terminate Signal*/
-	case SIGINT:
-	    terminate();
-		break;
+		/*Terminate Signal*/
+		case SIGINT:
+			terminate();
+			break;
 
-	
-	/*Timing Signal - service delay requests, complement UALRM*/
-	case SIGALRM:  //Alarm Signal (timing)
-	current_process ->pid = TIMER_I_PROC;
-	current_process->status = EXECUTING;
-	Timer_I_Proc();
-	current_process->status = IDLE;
-        break;
-
-    
-	/*CRT Signal*/
-	//case SIGUSR2:
-	case SIGUSR2:
-		if(current_process != NULL)
-			enque_PCB_to_readyQ(current_process);
-		else{
-			current_process = crt_i_proc;
-			current_process->status = EXECUTING;
-		}
-		CRT_I_Proc();
-		//current_process->status = IDLE;
-		break; 
 		
-	/*KB Signal*/
-	case SIGUSR1:
+		/*Timing Signal - service delay requests, complement UALRM*/
+		case SIGALRM:  //Alarm Signal (timing)
+			current_process ->pid = TIMER_I_PROC;
+			current_process->ip_status = EXECUTING;
+			Timer_I_Proc();
+			current_process->ip_status = IDLE;
+			break;
 
-	current_process ->pid = KB_I_PROC;
-	current_process->status = EXECUTING;
-	KB_I_Proc();
-	current_process->status = IDLE;
-	break; 
+	    
+		/*CRT Signal*/
+		case SIGUSR2:
+			if(cciHandleCRT == 1){
+				current_process = crt_i_proc;
+				current_process->ip_status = EXECUTING;
+				CRT_I_Proc();
+				current_process->ip_status = IDLE;
+				cciHandleCRT = 0;
+			}
+			break; 
+			
+		/*KB Signal*/
+		case SIGUSR1:
+			if(cciHandleKB == 1){
+				current_process = kb_i_proc;
+				current_process->ip_status = EXECUTING;
+				KB_I_Proc();
+				current_process->ip_status = IDLE;
+				cciHandleKB = 0;
+			}
+			break; 
 
-	default:	
-        printf("Unknown Signal!\n");
-		terminate();
-		exit(1);
-		break;
+		default:	
+		printf("Unknown Signal!\n");
+			terminate();
+			exit(1);
+			break;
 
     }
+    printf("Done signal handling..\n");
+    printf("pid = %x\n\n", save->pid);
+    
     current_process = save;
-    //~ atomic(0);
+    K_release_processor(); 
+    atomic(0);
+    
 }    
 
 void Initialization()
@@ -387,7 +244,8 @@ void Initialization()
 	int rtx_pid;
 	char kb_arg1[20], kb_arg2[20];
 	char crt_arg1[20], crt_arg2[20];
-	
+	cciHandleKB = 0;
+	cciHandleCRT = 0;
 	iTableRow *iTable = (struct iTableRow*)malloc(sizeof(iTableRow)*8);
 	
 	//Write to the iTable
@@ -711,6 +569,7 @@ void Initialization()
 	
 	if(crt_pid == 0)
 	{
+		sleep(5);
 		execl("./CRT", "CRT", crt_arg1, crt_arg2, (char *)0);
 
 		//should not reach here, but if it does, clean up and exit
@@ -718,25 +577,26 @@ void Initialization()
 		terminate();
 	}
 
-	usleep(1000);	//to allow crt to execute
+	//usleep(1000);	//to allow crt to execute
 
-	/*--------------------------FORK KB------------------------------*/
-	printf("Fork KB\n");
+	//~ /*--------------------------FORK KB------------------------------*/
+	//~ printf("Fork KB\n");
 	
-	kb_pid = fork();
-	if(kb_pid == 0)
-	{
-		execl("./KB", "KB", kb_arg1, kb_arg2, (char *)0);
+	//~ kb_pid = fork();
+	//~ if(kb_pid == 0)
+	//~ {
+		//~ sleep(10);
+		//~ execl("./KB", "KB", kb_arg1, kb_arg2, (char *)0);
 
-		//should not reach here, but if it does, clean up and exit
-		printf("KB initialization failed");
-		terminate();
-	}
+		//~ //should not reach here, but if it does, clean up and exit
+		//~ printf("KB initialization failed");
+		//~ terminate();
+	//~ }
 
-	usleep(1000);	//to allow kb to execute
+	//usleep(1000);	//to allow kb to execute
 
 	/*--------------------------------DONE FORK----------------------------------*/
-
+	
 	current_process = deque_PCB_from_readyQ();
 	longjmp ((current_process->context), 1);
 }

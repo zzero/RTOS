@@ -48,9 +48,10 @@ int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 	kb_sm_ptr->status = 0;				//0: ready for KB
 										//1: ready for RTX
 
+	sleep(5);
 	while(1)	//until killed by parent
 	{
-		usleep(6000);		//let rtx initialize, CCI to pop up on screen
+	//let rtx initialize, CCI to pop up on screen
 		c = getchar();						//wait until input (blocked)
 
 		if ( c != '\n' )					//not carriage return
@@ -68,9 +69,10 @@ int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 			kb_sm_ptr->status = 1;			//ready for rtx to take away char
 			kill(rtx_pid, SIGUSR1);			//send a signal to parent
 			index = 0;						//restart index
-
-			while(kb_sm_ptr->status == 1)
-				usleep(SLEEP);
+			printf("KB sleeping...\n");
+			while(kb_sm_ptr->status == 1){
+				sleep(1);
+			}
 			
 			//now go back to waiting for user input char
 		}

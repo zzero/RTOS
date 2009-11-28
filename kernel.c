@@ -34,6 +34,16 @@ PCB *PCB_finder(int pid)
 			return temp;
 	}
 	
+	if(pid == crt_i_proc->pid)
+		return crt_i_proc;
+	
+	else if(pid == kb_i_proc->pid)
+		return kb_i_proc;
+	
+	else if(pid == timer_i_proc->pid)
+		return timer_i_proc;
+	
+	
 	return NULL;
 }
 
@@ -157,6 +167,7 @@ int K_send_message(int dest_pid, MsgEnv *msg_env)
 
 MsgEnv *K_receive_message()
 {
+	printf("current_process status, pid = %d, %d\n",current_process->status,current_process->pid);
 	while(current_process->receive_env_head == NULL)
 	{
 		if(current_process->status == iPROC)
@@ -239,7 +250,7 @@ int K_send_console_chars(MsgEnv *msg_env)
 {
 	msg_env->dest_id = crt_i_proc->pid;
 	msg_env->type = DISPLAY_ACKNOWLEDGEMENT;
-	
+	printf("sending...\n");
 	int return_value = K_send_message(crt_i_proc->pid, msg_env);
 	
 	return return_value;
@@ -312,11 +323,10 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 int K_release_processor()
 {
 	if(current_process->status !=iPROC)
-		enque_PCB_to_readyQ(current_process);
+		process_switch();	
+
 	else
 		return FAIL;
-	
-	process_switch();
 	
 	return SUCCESS;
 }
@@ -386,17 +396,22 @@ void KB_I_Proc()
 void CRT_I_Proc()
 {
      MsgEnv* msgrecieved;    
-     printf("CRTIPRC\n");
      msgrecieved = K_receive_message(); 
-     //wait for msg to arrive from cci
+
+     while(msgrecieved == NULL){
+		msgrecieved = K_receive_message(); 
+		printf("msgreceving\n");
+		     }
+     printf("msg type %d\n",msgrecieved->sender_id);
      
-     while(msgrecieved == NULL){}
-     
-     strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
-     crt_sm_ptr->status = 0;
+     //~ strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
+     //~ crt_sm_ptr->status = 0; //,M
      
      K_send_message(msgrecieved->sender_id, msgrecieved);
      printf("CRT I PROC DONE..\n");
+     
+     strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
+     crt_sm_ptr->status = 0; 
 }
 
 

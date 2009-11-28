@@ -16,6 +16,8 @@
 #define STACKSIZE 16384 //whats this
 #define SK_OFFSET 16
 
+int cciHandleCRT;
+int cciHandleKB;
 /* Function Headers */
 int terminate();
 void ProcessA();

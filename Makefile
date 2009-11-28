@@ -5,8 +5,8 @@ CPP  = g++
 CC   = gcc
 
 RES  = 
-OBJ  = kernel.o RTX.o$(RES)
-LINKOBJ  = kernel.o RTX.o$(RES)
+OBJ  = kernel.o CCI.o RTX.o$(RES)
+LINKOBJ  = kernel.o CCI.o RTX.o$(RES)
 LIBS =   
 INCS = 
 CXXINCS = 
@@ -24,7 +24,7 @@ cur:
 	${RM} kb_sm_file crt_sm_file
 
 clean: 
-	${RM} $(OBJ) myRTX CRT KB kb_sm_file crt_sm_file *.o
+	${RM} $(OBJ) myRTX CCI CRT KB kb_sm_file crt_sm_file *.o
 
 myRTX: $(OBJ)
 	$(CC) $(LINKOBJ) -g -o "myRTX" $(LIBS) -lrt
@@ -37,6 +37,9 @@ KB: keyboard.o
 
 kernel.o: kernel.c
 	$(CC) -c -g kernel.c -o kernel.o $(CFLAGS)
+
+CCI.o: CCI.c
+	$(CC) -c -g CCI.c -o CCI.o $(CFLAGS)
 
 crt.o: crt.c
 	$(CC) -c -g crt.c -o crt.o $(CFLAGS)
