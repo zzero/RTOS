@@ -342,10 +342,11 @@ void process_switch()
 	
 	next_pcb = deque_PCB_from_readyQ(); //get ptr to highest priority ready process
 	next_pcb->status = EXECUTING;
+	//printf("PROC SWITCH after next_pcb\n");
 	
 	old_pcb = current_process;
 	enque_PCB_to_readyQ(old_pcb);
-	
+
 	current_process = next_pcb;
 	context_switch(&(old_pcb->context), &(next_pcb->context));
 }
@@ -365,7 +366,6 @@ void null_process()
 void KB_I_Proc()
 {
      MsgEnv * msgsend = K_receive_message();          //allocate msg env to send to cci
-     kb_sm * kb_sm_ptr;        //check kernel.h contains declaration
      char kb_txt[KB_MAXCHAR];  
      int index = 0;
      
@@ -386,15 +386,17 @@ void KB_I_Proc()
 void CRT_I_Proc()
 {
      MsgEnv* msgrecieved;    
-     printf("CRTIPRC");
+     printf("CRTIPRC\n");
      msgrecieved = K_receive_message(); 
-     printf("RECVED MSG?");
      //wait for msg to arrive from cci
-     while(msgrecieved == NULL);
-
+     
+     while(msgrecieved == NULL){}
+     
      strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
      crt_sm_ptr->status = 0;
      
+     K_send_message(msgrecieved->sender_id, msgrecieved);
+     printf("CRT I PROC DONE..\n");
 }
 
 

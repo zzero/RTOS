@@ -50,6 +50,7 @@ int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 
 	while(1)	//until killed by parent
 	{
+		usleep(6000);		//let rtx initialize, CCI to pop up on screen
 		c = getchar();						//wait until input (blocked)
 
 		if ( c != '\n' )					//not carriage return
@@ -57,7 +58,7 @@ int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 			if (index < KB_MAXCHAR - 1)		//last one is saved for the null char
 			{
 				kb_sm_ptr->data[index] = c;	//put input char into kb_sm
-				index+=1;					//increment index
+				index++;					//increment index
 			}
 		}
 

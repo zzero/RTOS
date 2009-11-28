@@ -18,8 +18,10 @@ RM = rm -f
 
 all: myRTX CRT KB
 
+kill:
+	killall -9 KB CRT
 cur:
-	${RM} kb_sm_file crt_sm_file RTX.o
+	${RM} kb_sm_file crt_sm_file
 
 clean: 
 	${RM} $(OBJ) myRTX CRT KB kb_sm_file crt_sm_file *.o

@@ -138,32 +138,49 @@ int terminate()
 }
     
 void ProcessA()
-{return;}
+{
+	while(1){
+		//printf("PROCESS A RUNNING\n");
+		K_release_processor();
+	}
+}
 
 void ProcessB()
-{return;}
+{	while(1){
+		//printf("PROCESS B RUNNING\n");
+		K_release_processor();
+	}
+}
 
 void ProcessC()
-{return;}
+{	while(1){
+		//printf("PROCESS C RUNNING\n");
+		K_release_processor();
+	}
+}
 
 /*Command Console Interface*/
 void cci()
 {
      /* Output CCI: to display wait for acknowledge, send msg 
      to kb_i_proc to return latest keyboard input*/  
-     printf("\nInside CCI\n");
+     printf("Inside CCI\n");
 
      MsgEnv* CCI_env;
      CCI_env = deque_msg_from_free_envQ();    
+     CCI_env->sender_id = CCI;
      strcpy(CCI_env->text_area,"CCI: \0");
      send_console_chars(CCI_env);
+
      CCI_env =  K_receive_message();
-     
+	
+     printf("CCI received msg..?\n");
+	
      while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT)
 	CCI_env = K_receive_message();
 	 
      
-     get_console_chars(CCI_env);
+     get_console_chars(CCI_env); //sends msg to kb i proc
      CCI_env =  K_receive_message();       // ---- line added s
      while (CCI_env->type != CONSOLE_INPUT);
      
@@ -298,16 +315,15 @@ void cci()
 
 void sig_handler(int sig_name)
 {
-	atomic(1);
-	printf("INSIDE SIG HANDLER");
+	printf("INSIDE SIG HANDLER\n");
 	
-	printf("\n\nsigrecevied: %d\n", sig_name);
-	printf("\nSIGUSR1 %d\n", SIGUSR1);
+	printf("sigrecevied: %d\n", sig_name);
+	printf("SIGUSR1 %d\n", SIGUSR1);
 	printf("SIGUSR2: %d\n", SIGUSR2);
 	printf("SIGINT: %d\n", SIGINT);
 	printf("SIGALARM: %d\n", SIGALRM);
 	
-	
+	//atomic(1);
 	/*Disable Signals, save pointer to currently active PCB*/
 	PCB* save = current_process;  
 	
@@ -358,7 +374,7 @@ void sig_handler(int sig_name)
 
     }
     current_process = save;
-    atomic(0);
+    //atomic(0);
 }    
 
 void Initialization()
@@ -549,9 +565,10 @@ void Initialization()
 			char *jmpsp;
 			jmpsp = apcb->stack_pointer;
 
-			#ifdef _sparc
-			_set_sp(jmpsp);
-			#endif // ASM??? comment this out....??
+			//~ #ifdef _sparc
+				//~ _set_sp(jmpsp);
+			//~ #endif // ASM??? comment this out....??
+			__asm__ ("movl %0,%%esp" :"=m" (jmpsp));
 			if (setjmp(apcb->context) == 0) //BK: setjmp function takes the jmp_buf, not the address of it. You should dereference context ptr (BK)
 			{
 				longjmp (kernel_buf, 1); 
@@ -590,9 +607,9 @@ void Initialization()
 		apcb->receive_env_tail = NULL;
 		
 		if(i == 5)
-			timer_i_proc=apcb;
-		if (i == 6)
 			crt_i_proc=apcb;
+		if (i == 6)
+			timer_i_proc=apcb;
 		if(i == 7)			
 			kb_i_proc=apcb;	
 	}
@@ -602,15 +619,14 @@ void Initialization()
 	sigset (SIGUSR2, sig_handler);
 	//ualarm(50000, 50000);
 	
-	/*--------------------------------------right now, CRT does not lrun--------------------------------------*/
 	
+	/*-----------------------------------------------------FORK-----------------------------------------------------------*/
 	kb_filename = "kb_sm_file";
 	crt_filename = "crt_sm_file";
-	/*--------------------------------FORK----------------------------------*/
 	rtx_pid = getpid();
 
-	/*--------------------------CRT FORK---------------------------*/
-	printf("\nFORKING STRATRING...\n");
+	/*--------------------------------------PARENT CRT SM MAP-----------------------------*/
+	printf("\nParent crt sm map\n");
 	
 	crt_sm_fid = open(crt_filename, O_RDWR | O_CREAT | O_EXCL, (mode_t) 0755 );
 	if (crt_sm_fid < 0)
@@ -625,24 +641,6 @@ void Initialization()
 		printf("Failed to ftruncate the file <%s>, status = %d\n", crt_filename, status );
 		terminate();
 	}
-	
-	sprintf(crt_arg1, "%d", rtx_pid);
-	sprintf(crt_arg2, "%d", crt_sm_fid);
-
-	//use fork to duplicate current process
-	crt_pid = fork();
-	
-	if(crt_pid == 0)
-	{
-		execl("./CRT", "CRT", crt_arg1, crt_arg2, (char *)0);
-
-		//should not reach here, but if it does, clean up and exit
-		printf("crt initialization failed");
-		terminate();
-	}
-
-	/*---------------PARENT CRT SM MAP----------------*/
-	usleep(1000);	//to allow crt to execute
 
 	crt_mmap_ptr = mmap
 	(
@@ -659,10 +657,15 @@ void Initialization()
 		printf("Parent's memory map has failed, about to quit!\n");
 		terminate();
 	}
-
+	
 	crt_sm_ptr = (crt_sm *) crt_mmap_ptr;	//char_sm pointer to the memory mapped
 	
-	/*--------------------------KB FORK---------------------------*/
+	sprintf(crt_arg1, "%d", rtx_pid);
+	sprintf(crt_arg2, "%d", crt_sm_fid);
+	
+	/*-----------------------------------------PARENT KB SM MAP-----------------------------------------*/
+	printf("Parent kb sm map\n");
+	
 	kb_sm_fid = open(kb_filename, O_RDWR | O_CREAT | O_EXCL, (mode_t) 0755 );
 	if (kb_sm_fid < 0)
 	{
@@ -677,23 +680,6 @@ void Initialization()
 		terminate();
 	}
 	
-	sprintf(kb_arg1, "%d", rtx_pid);
-	sprintf(kb_arg2, "%d", kb_sm_fid);
-
-	//use fork to duplicate current process
-	kb_pid = fork();
-	if(kb_pid == 0)
-	{
-		execl("./KB", "KB", kb_arg1, kb_arg2, (char *)0);
-
-		//should not reach here, but if it does, clean up and exit
-		printf("KB initialization failed");
-		terminate();
-	}
-
-	/*---------------PARENT KB SM MAP----------------*/
-	usleep(1000);	//to allow kb to execute
-
 	kb_mmap_ptr = mmap
 	(
 		(caddr_t) 0,				//memory location; 0 lets OS choose
@@ -710,7 +696,41 @@ void Initialization()
 		terminate();
 	}
 
-	kb_sm_ptr = (kb_sm *) kb_mmap_ptr;	//char_sm pointer to the memory mapped	
+	kb_sm_ptr = (kb_sm *) kb_mmap_ptr;	//char_sm pointer to the memory mapped
+	
+	sprintf(kb_arg1, "%d", rtx_pid);
+	sprintf(kb_arg2, "%d", kb_sm_fid);
+	
+	/*--------------------------FORK CRT------------------------------*/
+	printf("Fork crt\n");
+	crt_pid = fork();
+	
+	if(crt_pid == 0)
+	{
+		execl("./CRT", "CRT", crt_arg1, crt_arg2, (char *)0);
+
+		//should not reach here, but if it does, clean up and exit
+		printf("crt initialization failed");
+		terminate();
+	}
+
+	usleep(1000);	//to allow crt to execute
+
+	/*--------------------------FORK KB------------------------------*/
+	printf("Fork KB\n");
+	
+	kb_pid = fork();
+	if(kb_pid == 0)
+	{
+		execl("./KB", "KB", kb_arg1, kb_arg2, (char *)0);
+
+		//should not reach here, but if it does, clean up and exit
+		printf("KB initialization failed");
+		terminate();
+	}
+
+	usleep(1000);	//to allow kb to execute
+
 	/*--------------------------------DONE FORK----------------------------------*/
 
 	current_process = deque_PCB_from_readyQ();
