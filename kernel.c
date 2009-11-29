@@ -160,7 +160,7 @@ int K_send_message(int dest_pid, MsgEnv *msg_env)
 		}
 	}
 	
-	//trace_send(msg_env->sender_id, msg_env->dest_id, msg_env->type); TMPLY COMMENTED OUT FOR TESTING
+	trace_send(msg_env->sender_id, msg_env->dest_id, msg_env->type); 
 		
 	return SUCCESS;
 }
@@ -181,7 +181,7 @@ MsgEnv *K_receive_message()
 	}
 	
 	MsgEnv *msg_env = deque_msg_from_PCB(current_process);
-	//trace_receive(msg_env->sender_id, msg_env->dest_id, msg_env->type);
+	trace_receive(msg_env->sender_id, msg_env->dest_id, msg_env->type);
 	
 	return msg_env;
 }
@@ -286,25 +286,27 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 	
 	trace *send_temp;
 	trace *receive_temp;
-	printf("K_GET_TRACE_BUFFER\n");
+	
 	for(send_temp = TBsend->sendTrcBfr_head; send_temp != NULL; send_temp=send_temp->next)
 	{
 		if(send_temp->source_pid == defaultPID)
-			send_temp = send_temp->next;
+			continue;
+		
 		strcat(sendtrc_buf, itoa(send_temp->dest_pid, buf));
-		strcat(sendtrc_buf,",");
+		strcat(sendtrc_buf, ",");
 		strcat(sendtrc_buf,  itoa(send_temp->source_pid, buf));
-		strcat(sendtrc_buf,",");
+		strcat(sendtrc_buf, ",");
 		strcat(sendtrc_buf,  itoa(send_temp->message_type, buf));
-		strcat(sendtrc_buf,",");
+		strcat(sendtrc_buf, ",");
 		strcat(sendtrc_buf, itoa(send_temp->time_stamp, buf));
-		strcat(sendtrc_buf,",\n");
+		strcat(sendtrc_buf, ",\n");
 	}
-	printf("K_GET_TRACE_BUFFER\n");
+	
 	for(receive_temp = TBreceive->recvTrcBfr_head; receive_temp != NULL; receive_temp = receive_temp->next)
 	{
 		if(receive_temp->source_pid == defaultPID)
-			receive_temp = receive_temp->next;
+			continue;
+			
 		strcat(rcvtrc_buf, itoa(receive_temp->dest_pid, buf));
 		strcat(rcvtrc_buf,",");
 		strcat(rcvtrc_buf, itoa(receive_temp->source_pid, buf));
@@ -319,7 +321,7 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 	strcpy(to_return, sendtrc_buf);
 	strcat(to_return, "\n");
 	strcat(to_return, rcvtrc_buf);
-	
+	printf("%s\n",to_return);
 	strcpy(msg_env->text_area,to_return);
 	msg_env->type = GET_TRACE_BUF;
 
