@@ -18,6 +18,8 @@
 
 int cciHandleCRT;
 int cciHandleKB;
+
+
 /* Function Headers */
 int terminate();
 void ProcessA();

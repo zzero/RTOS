@@ -167,7 +167,7 @@ int K_send_message(int dest_pid, MsgEnv *msg_env)
 
 MsgEnv *K_receive_message()
 {
-	printf("current_process status, pid = %d, %d\n",current_process->status,current_process->pid);
+	//printf("current_process status, pid = %d, %d\n",current_process->status,current_process->pid);
 	while(current_process->receive_env_head == NULL)
 	{
 		if(current_process->status == iPROC)
@@ -250,9 +250,17 @@ int K_send_console_chars(MsgEnv *msg_env)
 {
 	msg_env->dest_id = crt_i_proc->pid;
 	msg_env->type = DISPLAY_ACKNOWLEDGEMENT;
-	printf("sending...\n");
+	//printf("sending...\n");
 	int return_value = K_send_message(crt_i_proc->pid, msg_env);
 	
+	PCB *temp;
+	if(printed == 1){
+		printed = 0;
+		temp = current_process;
+		current_process = crt_i_proc;
+		CRT_I_Proc();
+		current_process = temp;
+	}
 	return return_value;
 }
 
@@ -278,7 +286,7 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 	
 	trace *send_temp;
 	trace *receive_temp;
-	
+	printf("K_GET_TRACE_BUFFER\n");
 	for(send_temp = TBsend->sendTrcBfr_head; send_temp != NULL; send_temp=send_temp->next)
 	{
 		if(send_temp->source_pid == defaultPID)
@@ -292,7 +300,7 @@ int K_get_trace_buffers(MsgEnv *msg_env)
 		strcat(sendtrc_buf, itoa(send_temp->time_stamp, buf));
 		strcat(sendtrc_buf,",\n");
 	}
-	
+	printf("K_GET_TRACE_BUFFER\n");
 	for(receive_temp = TBreceive->recvTrcBfr_head; receive_temp != NULL; receive_temp = receive_temp->next)
 	{
 		if(receive_temp->source_pid == defaultPID)
@@ -357,7 +365,14 @@ void process_switch()
 	old_pcb = current_process;
 	enque_PCB_to_readyQ(old_pcb);
 	
+	if(old_pcb->pid == CCI){
+		atomic(0);
+	}
+
 	current_process = next_pcb;
+	if(next_pcb->pid == CCI){
+		atomic(1);
+	}
 	context_switch(&(old_pcb->context), &(next_pcb->context));
 }
 
@@ -398,17 +413,9 @@ void CRT_I_Proc()
      MsgEnv* msgrecieved;    
      msgrecieved = K_receive_message(); 
 
-     //~ while(msgrecieved == NULL){
-		//~ msgrecieved = K_receive_message(); 
-		//~ printf("msgreceving\n");
-		     //~ }
-     //~ printf("msg type %d\n",msgrecieved->sender_id);
-     
-     //~ strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
-     //~ crt_sm_ptr->status = 0; //,M
      if(msgrecieved != NULL){
 	     K_send_message(msgrecieved->sender_id, msgrecieved);
-	     printf("CRT I PROC DONE..\n");
+	     //printf("CRT I PROC DONE..\n");
 	     
 	     strcpy(crt_sm_ptr->data, msgrecieved->text_area); 
 	     crt_sm_ptr->status = 0; 

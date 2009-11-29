@@ -50,12 +50,11 @@ int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 	
 	sleep(3);						//let rtx finish initializing
 	kill(rtx_pid, SIGUSR2);		//intial call to the crt_i_proc
-	printf("SIGNAL SENT\n");
 	//printf("signal sent.. CRT sleep\n");
 	while(1)	//until killed by parent
 	{
 		while(crt_sm_ptr->status == 1){
-			usleep(3000);
+			usleep(100000);
 		}
 		//crt_sm_ptr->status = 0;					//0: ready for CRT
 		while(crt_sm_ptr->data[index] != '\0')
@@ -72,7 +71,7 @@ int main(int argc, char * argv[])	//get rtx_pid, fid from RTX during fork
 		
 		//kill(rtx_pid, SIGUSR2);		//send a signal to parent - supposed to send signal"s" until the bit is changed. RTX does not gurantee to rcv signal due to user primitives.		
 		
-		printf("signalling\n");
+		//printf("signalling\n");
 		kill(rtx_pid, SIGUSR2);
 		
 		//now go back to waiting for status bit to change

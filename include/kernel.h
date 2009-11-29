@@ -67,8 +67,8 @@
 #define CRT_MAXCHAR 85
 #define SLEEP 500
 
-
-
+//Handler for signal queue
+int printed;
 /* Structures */
 
 //kb shared memory

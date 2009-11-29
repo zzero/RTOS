@@ -12,63 +12,54 @@ void cci()
 	     printf("Inside CCI\n");
 	     CCI_env->sender_id = CCI;
 	     strcpy(CCI_env->text_area,"CCI: \0");
-	      printf("Sening msg to crt_I_prc\n");
+	      //printf("Sening msg to crt_I_prc\n");
+	     
 	     send_console_chars(CCI_env);
-	     printf("Sent msg to crt_I_prc\n");
-	     
-	    // cciHandleCRT = 1;
 	     CCI_env =  receive_message();
+	     while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT){
+	    	enque_msg_to_PCB(CCI_env, current_process);
+		CCI_env = receive_message();
+	     }
+
+	     get_console_chars(CCI_env); //sends msg to kb i proc
+	     CCI_env =  receive_message();       // ---- line added s
+	     while (CCI_env->type != CONSOLE_INPUT){
+		enque_msg_to_PCB(CCI_env, current_process);
+		CCI_env = receive_message();
+	     }
+
+	     /*Store text of CCI_env into character string, convert to lowercase*/
+	     char CCI_store[10];
+	     strcpy(CCI_store,CCI_env->text_area);
+	    // stolower(CCI_store);
 	     
+	     /*send message envelope to User Process A*/
+	     if(CCI_store[0] == 's' && CCI_store[1] == '\0')
+	     {
+		strcpy(CCI_env->text_area,CCI_store); 
+		send_message(PROCESSA, CCI_env); // 1 -> refers to USERPROC_A
 		
-	     printf("CCI received msg..from CRT\n");
-		
-	     //~ while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT){
-		//~ CCI_env = K_receive_message();
-		//~ printf("stuck..\n");
-		     //~ }
-		 
-	     //~ printf("sending msg to kb_i_prc\n");
-	     //~ atomic(1);
-	     //~ get_console_chars(CCI_env); //sends msg to kb i proc
-	     //~ printf("Sent msg to kb_I_prc\n"); 
-	     //~ atomic(0);
+		send_console_chars(CCI_env);
+		CCI_env =  K_receive_message();
+		while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT){
+			enque_msg_to_PCB(CCI_env, current_process);
+			CCI_env = receive_message();
+		}
+	     }
 	     
-	     //~ cciHandleKB = 1;
-	     //~ CCI_env =  K_receive_message();       // ---- line added s
-	     
-	
-	     //~ while (CCI_env->type != CONSOLE_INPUT)
-		     //~ CCI_env = K_receive_message();
-	     //~ printf("CCI received msg from KB..?\n");
-	      
-	     //~ /*Store text of CCI_env into character string, convert to lowercase*/
-	     //~ char CCI_store[10];
-	     //~ strcpy(CCI_store,CCI_env->text_area);
-	    //~ // stolower(CCI_store);
-	     
-	     //~ /*send message envelope to User Process A*/
-	     //~ if(CCI_store[0] == 's' && CCI_store[1] == '\0')
-	     //~ {
-		//~ strcpy(CCI_env->text_area,CCI_store); 
-		//~ send_message(PROCESSA, CCI_env); // 1 -> refers to USERPROC_A
+	     /*Display Process Status of all processes*/
+	     else if(CCI_store[0] == 'p' && CCI_store[1] == 's' && CCI_store[2] == '\0' )
+	     {
+		strcpy(CCI_env->text_area,CCI_store); 
+		request_process_status(CCI_env);
 		
-		//~ send_console_chars(CCI_env);
-		//~ CCI_env =  K_receive_message();
-		//~ while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
-		
-	     //~ }
-	     
-	     //~ /*Display Process Status of all processes*/
-	     //~ else if(CCI_store[0] == 'p' && CCI_store[1] == 's' && CCI_store[2] == '\0' )
-	     //~ {
-		//~ strcpy(CCI_env->text_area,CCI_store); 
-		//~ request_process_status(CCI_env);
-		
-		//~ send_console_chars(CCI_env);
-		//~ CCI_env =  K_receive_message();
-		//~ while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
-		     
-	     //~ }
+		send_console_chars(CCI_env);
+		CCI_env =  K_receive_message();
+		while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT){
+			enque_msg_to_PCB(CCI_env, current_process);
+			CCI_env = receive_message();
+		}
+	     }
 	     
 	     //~ /*Sets CCI wall clock to desired format*/
 	     //~ else if(CCI_store[0] == 'c' && CCI_store[1] == ' ' && CCI_store[2] == 'h' 
@@ -109,18 +100,22 @@ void cci()
 		
 	     //~ }
 	     
-	     //~ /*Display contents of send and recieve trace buffers*/
-	     //~ else if(CCI_store[0] == 'b' && CCI_store[1] == '\0')
-	     //~ {
-		 //~ strcpy(CCI_env->text_area,CCI_store);
+	     /*Display contents of send and recieve trace buffers*/
+	     else if(CCI_store[0] == 'b' && CCI_store[1] == '\0')
+	     {
+		 strcpy(CCI_env->text_area,CCI_store);
 		 
-		 //~ get_trace_buffers(CCI_env);
+		 get_trace_buffers(CCI_env);
+		 printf("CCI_ENV CONTENT = %s\n", CCI_env->text_area);
 		 
-		 //~ send_console_chars(CCI_env);
-		 //~ CCI_env =  K_receive_message();
-		 //~ while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
+		 send_console_chars(CCI_env);
+		 CCI_env =  K_receive_message();
+		 while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT){
+			enque_msg_to_PCB(CCI_env, current_process);
+			CCI_env = receive_message();
+		}
 		 
-	     //~ }
+	     }
 	     
 	     //~ /*Terminate RTX*/
 	     //~ else if(CCI_store[0] == 't' && CCI_store[1] == '\0')
@@ -165,7 +160,7 @@ void cci()
 		 //~ while (CCI_env->type != DISPLAY_ACKNOWLEDGEMENT);
 		 
 	      //~ }
-	      K_release_processor();
+	      release_processor();
       }
 		   
 }
